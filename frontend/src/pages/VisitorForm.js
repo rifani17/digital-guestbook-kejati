@@ -157,25 +157,25 @@ export const VisitorForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    if (!photo) {
-      toast.error('Silakan ambil foto terlebih dahulu')
-      return
-    }
-
     setLoading(true)
 
     try {
-      console.log('Starting photo upload...')
-      const photoUrl = await uploadPhoto()
+      let photoUrl = null
       
-      if (!photoUrl) {
-        toast.error('Gagal mengunggah foto. Pastikan storage bucket "guest-photos" sudah dibuat dan bersifat public.')
-        setLoading(false)
-        return
+      // Try to upload photo if available (optional)
+      if (photo) {
+        try {
+          console.log('Attempting to upload photo...')
+          photoUrl = await uploadPhoto()
+          console.log('Photo uploaded successfully:', photoUrl)
+        } catch (photoError) {
+          console.error('Photo upload failed, continuing without photo:', photoError)
+          toast.error('Foto gagal diupload, data akan disimpan tanpa foto')
+          // Continue without photo - don't throw error
+        }
+      } else {
+        console.log('No photo provided, saving without photo')
       }
-      
-      console.log('Photo uploaded successfully:', photoUrl)
-      console.log('Inserting visitor data...')
 
       const insertData = {
         nama: formData.nama,
@@ -183,20 +183,20 @@ export const VisitorForm = () => {
         no_hp: formData.no_hp,
         keperluan: formData.keperluan,
         tujuan_pejabat: formData.tujuan_pejabat,
-        foto_url: photoUrl,
+        foto_url: photoUrl, // Can be null
         jumlah_pengikut: formData.jumlah_pengikut ? parseInt(formData.jumlah_pengikut) : null
       }
       
-      console.log('Data to insert:', insertData)
+      console.log('Saving visitor data:', insertData)
 
       const { data, error } = await supabase.from('tamu').insert(insertData)
 
       if (error) {
-        console.error('Supabase error:', error)
+        console.error('Database insert error:', error)
         throw error
       }
       
-      console.log('Insert successful:', data)
+      console.log('Visitor data saved successfully')
 
       toast.success('Data berhasil disimpan!')
       setSuccess(true)
@@ -213,29 +213,16 @@ export const VisitorForm = () => {
         setSuccess(false)
       }, 3000)
     } catch (error) {
-      console.error('Full error object:', error)
+      console.error('Error saving visitor:', error)
       
-      if (error.message) {
-        console.error('Error message:', error.message)
-      }
-      
-      if (error.code) {
-        console.error('Error code:', error.code)
-      }
-      
-      // Specific error messages
-      if (error.message && error.message.includes('storage')) {
-        toast.error('Gagal mengunggah foto. Pastikan storage bucket "guest-photos" sudah dibuat dan bersifat public.')
-      } else if (error.code === '42P01') {
-        toast.error('Tabel "tamu" belum dibuat. Silakan jalankan SQL schema di Supabase Dashboard terlebih dahulu.')
+      if (error.code === '42P01') {
+        toast.error('Tabel "tamu" belum dibuat. Silakan jalankan SQL schema di Supabase.')
       } else if (error.code === '23503') {
         toast.error('Pejabat yang dipilih tidak valid. Silakan pilih pejabat lain.')
       } else if (error.message && error.message.includes('violates row-level security')) {
         toast.error('Permission denied. Silakan periksa RLS policies di Supabase.')
-      } else if (error.message && error.message.includes('relation')) {
-        toast.error('Database belum siap. Pastikan tabel sudah dibuat dengan menjalankan database_schema.sql')
       } else {
-        toast.error(`Terjadi kesalahan: ${error.message || 'Unknown error'}`)
+        toast.error(`Gagal menyimpan data: ${error.message || 'Unknown error'}`)
       }
     } finally {
       setLoading(false)
@@ -362,7 +349,8 @@ export const VisitorForm = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-slate-700">Foto *</Label>
+                <Label className="text-sm font-medium text-slate-700">Foto (Opsional)</Label>
+                <p className="text-xs text-slate-500 mb-2">Foto tidak wajib diisi</p>
                 <CameraCapture onCapture={setPhoto} />
               </div>
 
