@@ -1,14 +1,14 @@
 # Dependencies
 node_modules/
-.pnp
+/.pnp
 .pnp.js
 
 # Testing
-coverage/
+/coverage
 
 # Production
-build/
-dist/
+/build
+/dist
 
 # Misc
 .DS_Store
@@ -32,10 +32,14 @@ lerna-debug.log*
 *~
 
 # OS
-Thumbs.dbfrontend/node_modules/.cache/default-development/0.pack
-frontend/node_modules/.cache/default-development/1.pack
-frontend/node_modules/.cache/default-development/0.pack
-frontend/node_modules/.cache/default-development/3.pack
-frontend/node_modules/.cache/default-development/6.pack
-frontend/node_modules/.cache/default-development/10.pack
+Thumbs.db
+
+# Emergent.sh specific
+backend/
+tests/
+scripts/
+
+# Keep these
+!.env.example
 frontend/node_modules/.cache/default-development/2.pack
+frontend/node_modules/.cache/default-development/1.pack
