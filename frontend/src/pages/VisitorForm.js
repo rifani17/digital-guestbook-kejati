@@ -51,82 +51,101 @@ export const VisitorForm = () => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  const resizeAndConvertImage = async (base64Image) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      
+      img.onload = () => {
+        // Calculate new dimensions (max 720px on longest side)
+        let width = img.width
+        let height = img.height
+        const maxSize = 720
+        
+        if (width > maxSize || height > maxSize) {
+          if (width > height) {
+            height = (height / width) * maxSize
+            width = maxSize
+          } else {
+            width = (width / height) * maxSize
+            height = maxSize
+          }
+        }
+        
+        // Create canvas and resize
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        
+        // Draw resized image
+        ctx.drawImage(img, 0, 0, width, height)
+        
+        // Convert to WebP blob
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              console.log('Image resized and converted to webp:', {
+                originalSize: `${img.width}x${img.height}`,
+                newSize: `${width}x${height}`,
+                blobSize: `${(blob.size / 1024).toFixed(2)} KB`
+              })
+              resolve(blob)
+            } else {
+              reject(new Error('Failed to convert image to WebP'))
+            }
+          },
+          'image/webp',
+          0.85 // Quality 85%
+        )
+      }
+      
+      img.onerror = () => {
+        reject(new Error('Failed to load image'))
+      }
+      
+      img.src = base64Image
+    })
+  }
+
   const uploadPhoto = async () => {
     if (!photo) return null
 
     try {
-      console.log('=== UPLOAD PHOTO DEBUG ===')
+      console.log('Starting photo upload...')
       
-      // Check if bucket exists first
-      console.log('Checking if bucket exists...')
-      const { data: bucketData, error: bucketError } = await supabase.storage.getBucket('guest-photos')
+      // Resize and convert image to WebP
+      const webpBlob = await resizeAndConvertImage(photo)
       
-      if (bucketError) {
-        console.error('Bucket check error:', bucketError)
-        throw new Error(`Bucket 'guest-photos' tidak ditemukan. Silakan buat bucket terlebih dahulu.`)
+      if (!webpBlob) {
+        throw new Error('Failed to process image')
       }
       
-      console.log('Bucket exists:', bucketData)
+      // Generate unique filename
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.webp`
+      console.log('Uploading to Supabase...', fileName)
       
-      // Convert base64 to blob
-      console.log('Converting photo to blob...')
-      const base64Data = photo.split(',')[1]
-      if (!base64Data) {
-        throw new Error('Invalid photo format')
-      }
-      
-      const byteCharacters = atob(base64Data)
-      const byteNumbers = new Array(byteCharacters.length)
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i)
-      }
-      const byteArray = new Uint8Array(byteNumbers)
-      const blob = new Blob([byteArray], { type: 'image/jpeg' })
-      
-      console.log('Blob created:', {
-        size: blob.size,
-        type: blob.type,
-        sizeMB: (blob.size / 1024 / 1024).toFixed(2)
-      })
-      
-      // Check file size (max 5MB)
-      if (blob.size > 5 * 1024 * 1024) {
-        throw new Error('Ukuran foto terlalu besar. Maksimal 5MB.')
-      }
-
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
-      console.log('Uploading file:', fileName)
-      
+      // Direct upload to Supabase storage
       const { data, error } = await supabase.storage
         .from('guest-photos')
-        .upload(fileName, blob, {
-          contentType: 'image/jpeg',
+        .upload(fileName, webpBlob, {
+          contentType: 'image/webp',
           upsert: false,
           cacheControl: '3600'
         })
 
       if (error) {
-        console.error('Storage upload error details:', {
-          message: error.message,
-          statusCode: error.statusCode,
-          error: error
-        })
-        
-        if (error.statusCode === 400) {
-          throw new Error('Format foto tidak valid atau bucket tidak dikonfigurasi dengan benar. Pastikan bucket bersifat PUBLIC.')
-        }
-        
-        throw error
+        console.error('Upload error:', error)
+        throw new Error(`Upload failed: ${error.message}`)
       }
       
       console.log('Upload successful:', data)
 
+      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('guest-photos')
         .getPublicUrl(fileName)
       
-      console.log('Public URL:', publicUrl)
-      console.log('=== UPLOAD COMPLETE ===')
+      console.log('Public URL generated:', publicUrl)
 
       return publicUrl
     } catch (error) {
