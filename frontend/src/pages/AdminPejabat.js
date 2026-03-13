@@ -163,16 +163,16 @@ export const AdminPejabat = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="bg-white border-b border-slate-200 shadow-sm">
+      <div className="bg-gradient-to-r from-emerald-700 to-emerald-800 border-b border-emerald-900 shadow-sm">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <Link to="/admin/dashboard">
-              <Button variant="outline" className="h-10" data-testid="back-button">
+              <Button variant="outline" className="h-10 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white" data-testid="back-button">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Kembali
               </Button>
             </Link>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Kelola Pejabat</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Kelola Pejabat</h1>
           </div>
         </div>
       </div>
@@ -190,7 +190,7 @@ export const AdminPejabat = () => {
                 if (!open) resetForm()
               }}>
                 <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700" data-testid="add-pejabat-button">
+                  <Button className="bg-emerald-700 hover:bg-emerald-800" data-testid="add-pejabat-button">
                     <Plus className="w-4 h-4 mr-2" />
                     Tambah Pejabat
                   </Button>

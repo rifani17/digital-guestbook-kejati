@@ -133,32 +133,44 @@ Silakan menuju resepsionis.`
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Dashboard Admin</h1>
-          <div className="flex gap-3">
-            <Link to="/admin/tamu/new">
-              <Button className="h-10 bg-blue-600 hover:bg-blue-700" data-testid="tambah-tamu-button">
-                <UserPlus className="w-4 h-4 mr-2" />
-                Tambah Tamu
+      <div className="bg-gradient-to-r from-emerald-700 to-emerald-800 border-b border-emerald-900 shadow-lg">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img 
+                src="https://customer-assets.emergentagent.com/job_visitor-hub-15/artifacts/rpzl1xbx_logo-kejati.png" 
+                alt="Logo Kejaksaan"
+                className="w-12 h-12"
+              />
+              <div>
+                <h1 className="text-xl font-bold tracking-tight text-white">Dashboard Admin</h1>
+                <p className="text-sm text-emerald-100">Kejaksaan Tinggi Kalimantan Utara</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Link to="/admin/tamu/new">
+                <Button className="h-10 bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg" data-testid="tambah-tamu-button">
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Tambah Tamu
+                </Button>
+              </Link>
+              <Link to="/admin/pejabat">
+                <Button variant="outline" className="h-10 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white" data-testid="pejabat-link">
+                  <UserCog className="w-4 h-4 mr-2" />
+                  Kelola Pejabat
+                </Button>
+              </Link>
+              <Link to="/admin/jabatan">
+                <Button variant="outline" className="h-10 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white" data-testid="jabatan-link">
+                  <Briefcase className="w-4 h-4 mr-2" />
+                  Kelola Jabatan
+                </Button>
+              </Link>
+              <Button onClick={handleLogout} variant="outline" className="h-10 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white" data-testid="logout-button">
+                <LogOut className="w-4 h-4 mr-2" />
+                Keluar
               </Button>
-            </Link>
-            <Link to="/admin/pejabat">
-              <Button variant="outline" className="h-10" data-testid="pejabat-link">
-                <UserCog className="w-4 h-4 mr-2" />
-                Kelola Pejabat
-              </Button>
-            </Link>
-            <Link to="/admin/jabatan">
-              <Button variant="outline" className="h-10" data-testid="jabatan-link">
-                <Briefcase className="w-4 h-4 mr-2" />
-                Kelola Jabatan
-              </Button>
-            </Link>
-            <Button onClick={handleLogout} variant="outline" className="h-10" data-testid="logout-button">
-              <LogOut className="w-4 h-4 mr-2" />
-              Keluar
-            </Button>
+            </div>
           </div>
         </div>
       </div>

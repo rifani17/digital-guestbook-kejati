@@ -156,10 +156,18 @@ export const VisitorForm = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <div className="text-center mb-6">
+          <img 
+            src="https://customer-assets.emergentagent.com/job_visitor-hub-15/artifacts/rpzl1xbx_logo-kejati.png" 
+            alt="Logo Kejaksaan"
+            className="w-24 h-24 mx-auto mb-4"
+          />
+          <h2 className="text-2xl font-bold text-emerald-800">Kejaksaan Tinggi Kalimantan Utara</h2>
+        </div>
         <Card className="shadow-xl border-slate-200">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-t-xl">
+          <CardHeader className="bg-gradient-to-r from-emerald-700 to-emerald-600 text-white rounded-t-xl">
             <CardTitle className="text-3xl font-bold tracking-tight">Buku Tamu Digital</CardTitle>
-            <CardDescription className="text-blue-50">Silakan isi formulir di bawah ini</CardDescription>
+            <CardDescription className="text-emerald-50">Silakan isi formulir di bawah ini</CardDescription>
           </CardHeader>
           <CardContent className="p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -258,7 +266,7 @@ export const VisitorForm = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-14 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl text-lg font-semibold shadow-lg"
+                className="w-full h-14 bg-gradient-to-r from-emerald-700 to-emerald-600 hover:from-emerald-800 hover:to-emerald-700 text-white rounded-xl text-lg font-semibold shadow-lg shadow-emerald-700/30"
                 data-testid="submit-button"
               >
                 {loading ? 'Menyimpan...' : 'Kirim Data'}

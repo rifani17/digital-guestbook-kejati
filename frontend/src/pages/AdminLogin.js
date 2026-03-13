@@ -37,21 +37,33 @@ export const AdminLogin = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl flex rounded-2xl overflow-hidden shadow-2xl">
-        <div 
-          className="hidden lg:flex lg:w-1/2 bg-cover bg-center relative"
-          style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1670262338361-f024287fcc2d?auto=format&fit=crop&q=80)' }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/90 to-slate-900/90" />
-          <div className="relative z-10 p-12 flex flex-col justify-center text-white">
-            <h1 className="text-5xl font-bold tracking-tight mb-4">Buku Tamu Digital</h1>
-            <p className="text-xl text-blue-100">Sistem manajemen pengunjung profesional</p>
+      <div className="w-full max-w-6xl flex rounded-2xl overflow-hidden shadow-2xl bg-white">
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-700 to-emerald-900 relative">
+          <div className="relative z-10 p-12 flex flex-col items-center justify-center text-white w-full">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_visitor-hub-15/artifacts/rpzl1xbx_logo-kejati.png" 
+              alt="Logo Kejaksaan"
+              className="w-48 h-48 mb-8 drop-shadow-2xl"
+            />
+            <h1 className="text-4xl font-bold tracking-tight mb-3 text-center">Buku Tamu Digital</h1>
+            <h2 className="text-2xl font-semibold mb-4 text-center text-amber-300">Kejaksaan Tinggi</h2>
+            <h2 className="text-2xl font-semibold text-center text-amber-300">Kalimantan Utara</h2>
+            <div className="mt-8 w-24 h-1 bg-amber-400 rounded-full"></div>
+            <p className="text-lg text-emerald-100 mt-6 text-center">Sistem Manajemen Pengunjung Profesional</p>
           </div>
         </div>
         
         <div className="w-full lg:w-1/2 bg-white p-8 lg:p-12 flex items-center">
           <Card className="w-full border-0 shadow-none">
-            <CardHeader className="space-y-1">
+            <CardHeader className="space-y-1 text-center lg:text-left">
+              <div className="lg:hidden flex flex-col items-center mb-6">
+                <img 
+                  src="https://customer-assets.emergentagent.com/job_visitor-hub-15/artifacts/rpzl1xbx_logo-kejati.png" 
+                  alt="Logo Kejaksaan"
+                  className="w-32 h-32 mb-4"
+                />
+                <h2 className="text-xl font-bold text-emerald-800">Kejaksaan Tinggi Kalimantan Utara</h2>
+              </div>
               <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">Login Admin</CardTitle>
               <CardDescription className="text-base text-slate-600">Masukkan kredensial Anda untuk mengakses dashboard</CardDescription>
             </CardHeader>
@@ -66,7 +78,7 @@ export const AdminLogin = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="h-12"
+                    className="h-12 border-slate-300 focus:border-emerald-500 focus:ring-emerald-500"
                     placeholder="admin@guestbook.local"
                   />
                 </div>
@@ -80,7 +92,7 @@ export const AdminLogin = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="h-12"
+                    className="h-12 border-slate-300 focus:border-emerald-500 focus:ring-emerald-500"
                     placeholder="••••••••"
                   />
                 </div>
@@ -88,7 +100,7 @@ export const AdminLogin = () => {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold"
+                  className="w-full h-12 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-semibold shadow-lg shadow-emerald-700/20"
                   data-testid="login-button"
                 >
                   <LogIn className="w-5 h-5 mr-2" />
