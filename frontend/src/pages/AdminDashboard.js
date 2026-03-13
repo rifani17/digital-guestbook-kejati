@@ -4,12 +4,18 @@ import { useAuth } from '../contexts/AuthContext'
 import { useNavigate, Link } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
+import { Textarea } from '../components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu'
-import { Users, Calendar, LogOut, UserCog, Briefcase, UserPlus, Menu, UserCheck, TrendingUp } from 'lucide-react'
+import { Users, Calendar, LogOut, UserCog, Briefcase, UserPlus, Menu, UserCheck, TrendingUp, Edit, Trash2 } from 'lucide-react'
 import { format, subDays, startOfDay, startOfMonth } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { toast } from 'sonner'
 
 export const AdminDashboard = () => {
   const [visitors, setVisitors] = useState([])
@@ -17,6 +23,16 @@ export const AdminDashboard = () => {
   const [pejabatStatus, setPejabatStatus] = useState([])
   const [chartData, setChartData] = useState([])
   const [chartFilter, setChartFilter] = useState('today')
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editingVisitor, setEditingVisitor] = useState(null)
+  const [editFormData, setEditFormData] = useState({
+    nama: '',
+    asal: '',
+    no_hp: '',
+    keperluan: '',
+    tujuan_pejabat: '',
+    jumlah_pengikut: ''
+  })
   const { signOut } = useAuth()
   const navigate = useNavigate()
 
@@ -229,6 +245,70 @@ Silakan menuju resepsionis.`
       </span>
     )
   }
+
+  const handleEditVisitor = (visitor) => {
+    setEditingVisitor(visitor)
+    setEditFormData({
+      nama: visitor.nama,
+      asal: visitor.asal,
+      no_hp: visitor.no_hp,
+      keperluan: visitor.keperluan,
+      tujuan_pejabat: visitor.tujuan_pejabat,
+      jumlah_pengikut: visitor.jumlah_pengikut || ''
+    })
+    setEditDialogOpen(true)
+  }
+
+  const handleUpdateVisitor = async () => {
+    if (!editingVisitor) return
+
+    try {
+      const { error } = await supabase
+        .from('tamu')
+        .update({
+          nama: editFormData.nama,
+          asal: editFormData.asal,
+          no_hp: editFormData.no_hp,
+          keperluan: editFormData.keperluan,
+          tujuan_pejabat: editFormData.tujuan_pejabat,
+          jumlah_pengikut: editFormData.jumlah_pengikut ? parseInt(editFormData.jumlah_pengikut) : null
+        })
+        .eq('id_tamu', editingVisitor.id_tamu)
+
+      if (error) throw error
+
+      toast.success('Data tamu berhasil diupdate')
+      setEditDialogOpen(false)
+      setEditingVisitor(null)
+      fetchVisitors()
+    } catch (error) {
+      console.error('Error updating visitor:', error)
+      toast.error('Gagal mengupdate data tamu')
+    }
+  }
+
+  const handleDeleteVisitor = async (visitorId, visitorName) => {
+    if (!window.confirm(`Yakin ingin menghapus data tamu "${visitorName}"?`)) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('tamu')
+        .delete()
+        .eq('id_tamu', visitorId)
+
+      if (error) throw error
+
+      toast.success('Data tamu berhasil dihapus')
+      fetchVisitors()
+      fetchStats() // Update stats after delete
+    } catch (error) {
+      console.error('Error deleting visitor:', error)
+      toast.error('Gagal menghapus data tamu')
+    }
+  }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -464,13 +544,36 @@ Silakan menuju resepsionis.`
                         )}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          onClick={() => sendWhatsApp(visitor)}
-                          className="bg-emerald-500 hover:bg-emerald-600 text-white h-10 px-4 rounded-full"
-                          data-testid="whatsapp-button"
-                        >
-                          Kirim WhatsApp
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleEditVisitor(visitor)}
+                            variant="outline"
+                            size="sm"
+                            className="h-9"
+                            data-testid="edit-visitor-button"
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteVisitor(visitor.id_tamu, visitor.nama)}
+                            variant="outline"
+                            size="sm"
+                            className="h-9 text-red-600 hover:text-red-700 hover:border-red-300"
+                            data-testid="delete-visitor-button"
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Hapus
+                          </Button>
+                          <Button
+                            onClick={() => sendWhatsApp(visitor)}
+                            size="sm"
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white h-9"
+                            data-testid="whatsapp-button"
+                          >
+                            WhatsApp
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -479,6 +582,100 @@ Silakan menuju resepsionis.`
             </div>
           </CardContent>
         </Card>
+
+        {/* Edit Visitor Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Edit Data Tamu</DialogTitle>
+              <DialogDescription>
+                Update informasi pengunjung
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-nama">Nama Lengkap</Label>
+                <Input
+                  id="edit-nama"
+                  value={editFormData.nama}
+                  onChange={(e) => setEditFormData({ ...editFormData, nama: e.target.value })}
+                  placeholder="Nama lengkap"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-asal">Asal / Instansi</Label>
+                <Input
+                  id="edit-asal"
+                  value={editFormData.asal}
+                  onChange={(e) => setEditFormData({ ...editFormData, asal: e.target.value })}
+                  placeholder="Asal instansi"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-no-hp">Nomor HP</Label>
+                <Input
+                  id="edit-no-hp"
+                  value={editFormData.no_hp}
+                  onChange={(e) => setEditFormData({ ...editFormData, no_hp: e.target.value })}
+                  placeholder="08xxxxxxxxxx"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-tujuan">Tujuan Pejabat</Label>
+                <Select
+                  value={editFormData.tujuan_pejabat}
+                  onValueChange={(value) => setEditFormData({ ...editFormData, tujuan_pejabat: value })}
+                >
+                  <SelectTrigger id="edit-tujuan">
+                    <SelectValue placeholder="Pilih pejabat" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pejabatStatus.map((pejabat) => (
+                      <SelectItem key={pejabat.id_pejabat} value={pejabat.id_pejabat}>
+                        {pejabat.nama}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-keperluan">Keperluan</Label>
+                <Textarea
+                  id="edit-keperluan"
+                  value={editFormData.keperluan}
+                  onChange={(e) => setEditFormData({ ...editFormData, keperluan: e.target.value })}
+                  placeholder="Keperluan kunjungan"
+                  className="min-h-20"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-jumlah">Jumlah Pengikut</Label>
+                <Input
+                  id="edit-jumlah"
+                  type="number"
+                  min="0"
+                  value={editFormData.jumlah_pengikut}
+                  onChange={(e) => setEditFormData({ ...editFormData, jumlah_pengikut: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setEditDialogOpen(false)}
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleUpdateVisitor}
+                className="bg-emerald-700 hover:bg-emerald-800"
+              >
+                Simpan Perubahan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
