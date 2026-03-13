@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
-import { Users, Calendar, LogOut, UserCog, Briefcase } from 'lucide-react'
+import { Users, Calendar, LogOut, UserCog, Briefcase, UserPlus } from 'lucide-react'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 
@@ -137,6 +137,12 @@ Silakan menuju resepsionis.`
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Dashboard Admin</h1>
           <div className="flex gap-3">
+            <Link to="/admin/tamu/new">
+              <Button className="h-10 bg-blue-600 hover:bg-blue-700" data-testid="tambah-tamu-button">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Tambah Tamu
+              </Button>
+            </Link>
             <Link to="/admin/pejabat">
               <Button variant="outline" className="h-10" data-testid="pejabat-link">
                 <UserCog className="w-4 h-4 mr-2" />

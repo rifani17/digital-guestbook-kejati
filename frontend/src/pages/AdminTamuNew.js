@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { CameraCapture } from '../components/CameraCapture'
+import { useNavigate, Link } from 'react-router-dom'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'
 import { Textarea } from '../components/ui/textarea'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
-import { CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 
-export const VisitorForm = () => {
+export const AdminTamuNew = () => {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     nama: '',
     asal: '',
@@ -19,10 +20,10 @@ export const VisitorForm = () => {
     tujuan_pejabat: '',
     jumlah_pengikut: ''
   })
-  const [photo, setPhoto] = useState(null)
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(null)
   const [pejabatList, setPejabatList] = useState([])
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
 
   useEffect(() => {
     fetchPejabat()
@@ -36,6 +37,7 @@ export const VisitorForm = () => {
     
     if (error) {
       console.error('Error fetching pejabat:', error)
+      toast.error('Gagal memuat data pejabat')
     } else {
       setPejabatList(data || [])
     }
@@ -45,25 +47,44 @@ export const VisitorForm = () => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  const handlePhotoChange = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Ukuran file maksimal 5MB')
+        return
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        toast.error('File harus berupa gambar')
+        return
+      }
+
+      setPhotoFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removePhoto = () => {
+    setPhotoFile(null)
+    setPhotoPreview(null)
+  }
+
   const uploadPhoto = async () => {
-    if (!photo) return null
+    if (!photoFile) return null
 
     try {
-      const base64Data = photo.split(',')[1]
-      const byteCharacters = atob(base64Data)
-      const byteNumbers = new Array(byteCharacters.length)
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i)
-      }
-      const byteArray = new Uint8Array(byteNumbers)
-      const blob = new Blob([byteArray], { type: 'image/jpeg' })
-
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
+      const fileExt = photoFile.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
       
       const { data, error } = await supabase.storage
         .from('guest-photos')
-        .upload(fileName, blob, {
-          contentType: 'image/jpeg',
+        .upload(fileName, photoFile, {
+          contentType: photoFile.type,
           upsert: false
         })
 
@@ -78,28 +99,23 @@ export const VisitorForm = () => {
 
       return publicUrl
     } catch (error) {
-      console.error('Error in uploadPhoto:', error)
-      throw error
+      console.error('Error uploading photo:', error)
+      return null
     }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
-    if (!photo) {
-      toast.error('Silakan ambil foto terlebih dahulu')
-      return
-    }
-
     setLoading(true)
 
     try {
-      const photoUrl = await uploadPhoto()
+      let photoUrl = null
       
-      if (!photoUrl) {
-        toast.error('Gagal mengunggah foto. Pastikan storage bucket sudah dibuat.')
-        setLoading(false)
-        return
+      if (photoFile) {
+        photoUrl = await uploadPhoto()
+        if (!photoUrl) {
+          toast.error('Gagal mengunggah foto, tetapi data akan tetap disimpan')
+        }
       }
 
       const { error } = await supabase.from('tamu').insert({
@@ -114,54 +130,39 @@ export const VisitorForm = () => {
 
       if (error) throw error
 
-      setSuccess(true)
-      setTimeout(() => {
-        setFormData({
-          nama: '',
-          asal: '',
-          no_hp: '',
-          keperluan: '',
-          tujuan_pejabat: '',
-          jumlah_pengikut: ''
-        })
-        setPhoto(null)
-        setSuccess(false)
-      }, 3000)
+      toast.success('Data tamu berhasil ditambahkan')
+      navigate('/admin/dashboard')
     } catch (error) {
       console.error('Error:', error)
-      if (error.message && error.message.includes('storage')) {
-        toast.error('Gagal mengunggah foto. Pastikan storage bucket "guest-photos" sudah dibuat dan bersifat public.')
-      } else {
-        toast.error('Terjadi kesalahan saat menyimpan data')
-      }
+      toast.error('Gagal menambahkan data tamu')
     } finally {
       setLoading(false)
     }
   }
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardContent className="pt-12 pb-12">
-            <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto mb-6" />
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Terima Kasih!</h2>
-            <p className="text-slate-600">Data Anda telah berhasil disimpan</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <Card className="shadow-xl border-slate-200">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-t-xl">
-            <CardTitle className="text-3xl font-bold tracking-tight">Buku Tamu Digital</CardTitle>
-            <CardDescription className="text-blue-50">Silakan isi formulir di bawah ini</CardDescription>
+      <div className="bg-white border-b border-slate-200 shadow-sm">
+        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Link to="/admin/dashboard">
+              <Button variant="outline" className="h-10" data-testid="back-button">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Kembali
+              </Button>
+            </Link>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Tambah Tamu Manual</h1>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-6 py-8 max-w-3xl">
+        <Card className="shadow-sm border-slate-200">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Form Registrasi Tamu</CardTitle>
+            <CardDescription>Input data tamu secara manual oleh admin</CardDescription>
           </CardHeader>
-          <CardContent className="p-8">
+          <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="nama" className="text-sm font-medium text-slate-700">Nama Lengkap *</Label>
@@ -232,7 +233,7 @@ export const VisitorForm = () => {
                   onChange={(e) => handleInputChange('keperluan', e.target.value)}
                   required
                   className="min-h-24"
-                  placeholder="Jelaskan keperluan kunjungan Anda"
+                  placeholder="Jelaskan keperluan kunjungan"
                 />
               </div>
 
@@ -251,18 +252,59 @@ export const VisitorForm = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-slate-700">Foto *</Label>
-                <CameraCapture onCapture={setPhoto} />
+                <Label className="text-sm font-medium text-slate-700">Foto (Opsional)</Label>
+                {!photoPreview ? (
+                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors">
+                    <input
+                      type="file"
+                      id="photo-upload"
+                      data-testid="photo-input"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                    />
+                    <label htmlFor="photo-upload" className="cursor-pointer">
+                      <Upload className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                      <p className="text-sm text-slate-600 mb-1">Klik untuk upload foto</p>
+                      <p className="text-xs text-slate-500">JPG, PNG, atau JPEG (Maks. 5MB)</p>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <img src={photoPreview} alt="Preview" className="w-full h-64 object-cover rounded-xl" />
+                    <Button
+                      type="button"
+                      onClick={removePhoto}
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      data-testid="remove-photo-button"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full h-14 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl text-lg font-semibold shadow-lg"
-                data-testid="submit-button"
-              >
-                {loading ? 'Menyimpan...' : 'Kirim Data'}
-              </Button>
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate('/admin/dashboard')}
+                  className="flex-1 h-12"
+                  data-testid="cancel-button"
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 h-12 bg-blue-600 hover:bg-blue-700"
+                  data-testid="submit-button"
+                >
+                  {loading ? 'Menyimpan...' : 'Simpan Data Tamu'}
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>

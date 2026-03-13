@@ -8,6 +8,7 @@ import { AdminLogin } from './pages/AdminLogin'
 import { AdminDashboard } from './pages/AdminDashboard'
 import { AdminPejabat } from './pages/AdminPejabat'
 import { AdminJabatan } from './pages/AdminJabatan'
+import { AdminTamuNew } from './pages/AdminTamuNew'
 
 function App() {
   return (
@@ -38,6 +39,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminJabatan />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/tamu/new"
+            element={
+              <ProtectedRoute>
+                <AdminTamuNew />
               </ProtectedRoute>
             }
           />
