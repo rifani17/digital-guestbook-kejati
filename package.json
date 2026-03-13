@@ -1,0 +1,11 @@
+{
+  "name": "digital-guestbook",
+  "version": "1.0.0",
+  "description": "Digital Guest Book - Visitor Management System",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rifani17/digital-guestbook-kejati.git"
+  },
+  "author": "",
+  "license": "MIT"
+}
