@@ -5,14 +5,18 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
-import { Users, Calendar, LogOut, UserCog, Briefcase, UserPlus } from 'lucide-react'
-import { format } from 'date-fns'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu'
+import { Users, Calendar, LogOut, UserCog, Briefcase, UserPlus, Menu, UserCheck, TrendingUp } from 'lucide-react'
+import { format, subDays, startOfDay, startOfMonth } from 'date-fns'
 import { id } from 'date-fns/locale'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
 export const AdminDashboard = () => {
   const [visitors, setVisitors] = useState([])
-  const [stats, setStats] = useState({ today: 0, thisMonth: 0 })
+  const [stats, setStats] = useState({ today: 0, thisMonth: 0, presentOfficials: 0 })
   const [pejabatStatus, setPejabatStatus] = useState([])
+  const [chartData, setChartData] = useState([])
+  const [chartFilter, setChartFilter] = useState('today')
   const { signOut } = useAuth()
   const navigate = useNavigate()
 
@@ -27,6 +31,10 @@ export const AdminDashboard = () => {
       subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    fetchChartData()
+  }, [chartFilter])
 
   const fetchData = async () => {
     await Promise.all([fetchVisitors(), fetchStats(), fetchPejabatStatus()])
@@ -68,9 +76,15 @@ export const AdminDashboard = () => {
       .select('id_tamu', { count: 'exact' })
       .gte('tanggal', firstDayOfMonth.toISOString())
 
+    const { data: presentOfficials } = await supabase
+      .from('pejabat')
+      .select('id_pejabat', { count: 'exact' })
+      .eq('status', 'di_tempat')
+
     setStats({
       today: todayData?.length || 0,
-      thisMonth: monthData?.length || 0
+      thisMonth: monthData?.length || 0,
+      presentOfficials: presentOfficials?.length || 0
     })
   }
 
@@ -89,6 +103,91 @@ export const AdminDashboard = () => {
       setPejabatStatus(data || [])
     }
   }
+
+  const fetchChartData = async () => {
+    let startDate
+    const now = new Date()
+    
+    if (chartFilter === 'today') {
+      startDate = startOfDay(now)
+    } else if (chartFilter === 'week') {
+      startDate = startOfDay(subDays(now, 6))
+    } else if (chartFilter === 'month') {
+      startDate = startOfMonth(now)
+    }
+
+    const { data, error } = await supabase
+      .from('tamu')
+      .select('tanggal')
+      .gte('tanggal', startDate.toISOString())
+      .order('tanggal', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching chart data:', error)
+      return
+    }
+
+    const processedData = processChartData(data, startDate)
+    setChartData(processedData)
+  }
+
+  const processChartData = (data, startDate) => {
+    if (chartFilter === 'today') {
+      const hours = Array.from({ length: 24 }, (_, i) => ({
+        label: `${i.toString().padStart(2, '0')}:00`,
+        value: 0
+      }))
+      
+      data.forEach(visitor => {
+        const hour = new Date(visitor.tanggal).getHours()
+        hours[hour].value++
+      })
+      
+      const nonZeroHours = hours.filter((h, i) => 
+        h.value > 0 || 
+        (i > 0 && hours[i - 1].value > 0) || 
+        (i < 23 && hours[i + 1].value > 0)
+      )
+      
+      return nonZeroHours.length > 0 ? nonZeroHours : hours.slice(8, 17)
+    } else {
+      const days = []
+      const dayCount = chartFilter === 'week' ? 7 : 30
+      
+      for (let i = 0; i < dayCount; i++) {
+        const date = new Date(startDate)
+        date.setDate(date.getDate() + i)
+        days.push({
+          label: format(date, 'dd MMM', { locale: id }),
+          value: 0,
+          fullDate: format(date, 'yyyy-MM-dd')
+        })
+      }
+      
+      data.forEach(visitor => {
+        const date = format(new Date(visitor.tanggal), 'yyyy-MM-dd')
+        const dayIndex = days.findIndex(d => d.fullDate === date)
+        if (dayIndex !== -1) {
+          days[dayIndex].value++
+        }
+      })
+      
+      return days
+    }
+  }
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 rounded-lg shadow-lg border border-slate-200">
+          <p className="text-sm font-semibold text-slate-900">{payload[0].payload.label}</p>
+          <p className="text-sm text-emerald-600">{payload[0].value} pengunjung</p>
+        </div>
+      )
+    }
+    return null
+  }
+
 
   const handleLogout = async () => {
     await signOut()
@@ -147,7 +246,9 @@ Silakan menuju resepsionis.`
                 <p className="text-sm text-emerald-100">Kejaksaan Tinggi Kalimantan Utara</p>
               </div>
             </div>
-            <div className="flex gap-3">
+            
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex gap-3">
               <Link to="/admin/tamu/new">
                 <Button className="h-10 bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg" data-testid="tambah-tamu-button">
                   <UserPlus className="w-4 h-4 mr-2" />
@@ -171,6 +272,41 @@ Silakan menuju resepsionis.`
                 Keluar
               </Button>
             </div>
+
+            {/* Mobile Navigation */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-10 w-10 bg-white/10 border-white/20 text-white hover:bg-white/20" data-testid="mobile-menu-button">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/tamu/new" className="flex items-center cursor-pointer">
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Tambah Tamu
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/pejabat" className="flex items-center cursor-pointer">
+                      <UserCog className="w-4 h-4 mr-2" />
+                      Kelola Pejabat
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/jabatan" className="flex items-center cursor-pointer">
+                      <Briefcase className="w-4 h-4 mr-2" />
+                      Kelola Jabatan
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Keluar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>
@@ -183,7 +319,7 @@ Silakan menuju resepsionis.`
               <CardTitle className="text-4xl font-bold text-slate-900">{stats.today}</CardTitle>
             </CardHeader>
             <CardContent>
-              <Users className="w-8 h-8 text-blue-500" />
+              <Users className="w-8 h-8 text-emerald-600" />
             </CardContent>
           </Card>
 
@@ -193,21 +329,89 @@ Silakan menuju resepsionis.`
               <CardTitle className="text-4xl font-bold text-slate-900">{stats.thisMonth}</CardTitle>
             </CardHeader>
             <CardContent>
-              <Calendar className="w-8 h-8 text-blue-500" />
+              <Calendar className="w-8 h-8 text-emerald-600" />
             </CardContent>
           </Card>
 
           <Card className="shadow-sm border-slate-200">
             <CardHeader className="pb-3">
-              <CardDescription className="text-sm uppercase tracking-wider text-slate-500">Status Pejabat</CardDescription>
-              <CardTitle className="text-4xl font-bold text-slate-900">{pejabatStatus.length}</CardTitle>
+              <CardDescription className="text-sm uppercase tracking-wider text-slate-500">Pejabat di Tempat</CardDescription>
+              <CardTitle className="text-4xl font-bold text-slate-900">{stats.presentOfficials}</CardTitle>
             </CardHeader>
             <CardContent>
-              <UserCog className="w-8 h-8 text-blue-500" />
+              <UserCheck className="w-8 h-8 text-emerald-600" />
             </CardContent>
           </Card>
         </div>
 
+        {/* Visitor Chart */}
+        <Card className="shadow-sm border-slate-200 mb-8">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+                  Statistik Kunjungan
+                </CardTitle>
+                <CardDescription>Grafik jumlah pengunjung</CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant={chartFilter === 'today' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setChartFilter('today')}
+                  className={chartFilter === 'today' ? 'bg-emerald-700 hover:bg-emerald-800' : ''}
+                >
+                  Hari Ini
+                </Button>
+                <Button
+                  variant={chartFilter === 'week' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setChartFilter('week')}
+                  className={chartFilter === 'week' ? 'bg-emerald-700 hover:bg-emerald-800' : ''}
+                >
+                  7 Hari
+                </Button>
+                <Button
+                  variant={chartFilter === 'month' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setChartFilter('month')}
+                  className={chartFilter === 'month' ? 'bg-emerald-700 hover:bg-emerald-800' : ''}
+                >
+                  Bulan Ini
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis 
+                    dataKey="label" 
+                    tick={{ fill: '#64748b', fontSize: 12 }}
+                    angle={chartFilter === 'month' ? -45 : 0}
+                    textAnchor={chartFilter === 'month' ? 'end' : 'middle'}
+                    height={chartFilter === 'month' ? 80 : 30}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#64748b', fontSize: 12 }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.value > 0 ? '#059669' : '#e2e8f0'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pejabat Status */}
         <Card className="shadow-sm border-slate-200 mb-8">
           <CardHeader>
             <CardTitle className="text-xl font-semibold">Status Ketersediaan Pejabat</CardTitle>
