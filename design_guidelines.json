@@ -1,0 +1,153 @@
+{
+  "design_system": {
+    "name": "Swiss Digital Bureau",
+    "description": "A precision-engineered visitor management system inspired by Swiss design principles—clean, grid-based, and highly legible. Optimized for tablet touch interaction.",
+    "typography": {
+      "font_family": {
+        "heading": "Inter, system-ui, sans-serif",
+        "body": "Inter, system-ui, sans-serif",
+        "mono": "JetBrains Mono, monospace"
+      },
+      "scale": {
+        "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+        "h2": "text-3xl font-semibold tracking-tight",
+        "h3": "text-2xl font-medium tracking-tight",
+        "body_lg": "text-lg leading-relaxed",
+        "body": "text-base leading-relaxed text-slate-600",
+        "caption": "text-sm text-slate-500 uppercase tracking-widest"
+      }
+    },
+    "colors": {
+      "palette": {
+        "primary": {
+          "DEFAULT": "#0F172A",
+          "foreground": "#F8FAFC"
+        },
+        "secondary": {
+          "DEFAULT": "#F1F5F9",
+          "foreground": "#0F172A"
+        },
+        "accent": {
+          "DEFAULT": "#3B82F6",
+          "foreground": "#FFFFFF"
+        },
+        "success": {
+          "DEFAULT": "#10B981", 
+          "foreground": "#FFFFFF"
+        },
+        "destructive": {
+          "DEFAULT": "#EF4444",
+          "foreground": "#FFFFFF"
+        },
+        "background": "#F8FAFC",
+        "surface": "#FFFFFF",
+        "border": "#E2E8F0"
+      },
+      "gradients": {
+        "subtle_glow": "bg-gradient-to-br from-slate-50 to-slate-100",
+        "active_state": "bg-gradient-to-r from-blue-600 to-blue-500"
+      }
+    },
+    "spacing": {
+      "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+      "card_padding": "p-6 md:p-8",
+      "section_gap": "gap-8 md:gap-12",
+      "touch_target": "min-h-[44px] min-w-[44px]"
+    },
+    "visual_enhancers": {
+      "radius": {
+        "default": "rounded-lg",
+        "card": "rounded-xl",
+        "pill": "rounded-full"
+      },
+      "shadows": {
+        "card": "shadow-sm hover:shadow-md transition-shadow duration-200",
+        "floating": "shadow-xl shadow-slate-200/50",
+        "inner": "shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]"
+      },
+      "glass": "bg-white/80 backdrop-blur-md border border-white/20"
+    }
+  },
+  "layout_strategies": {
+    "public_form": {
+      "structure": "Single Column 'Wizard' Card",
+      "alignment": "Centered on screen",
+      "background": "Split layout: Left 1/3 Pattern/Brand, Right 2/3 Form (Desktop) or Full Screen Card (Mobile/Tablet)",
+      "animation": "Slide-in from right for new steps"
+    },
+    "admin_dashboard": {
+      "structure": "Sidebar Navigation (Left) + Main Content Area (Right)",
+      "grid": "Bento Grid Mode B (Dense Data)",
+      "header": "Sticky top bar with user profile and quick actions"
+    }
+  },
+  "components": {
+    "ui": {
+      "Button": {
+        "path": "src/components/ui/button.jsx",
+        "variants": {
+          "default": "bg-primary text-primary-foreground shadow hover:bg-primary/90 h-11 px-8 rounded-md transition-all active:scale-95",
+          "outline": "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-11 px-8 rounded-md",
+          "whatsapp": "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm h-10 px-4 gap-2 flex items-center justify-center font-medium rounded-full"
+        }
+      },
+      "Card": {
+        "path": "src/components/ui/card.jsx",
+        "style": "bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm"
+      },
+      "Input": {
+        "path": "src/components/ui/input.jsx",
+        "style": "flex h-12 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      },
+      "Table": {
+        "path": "src/components/ui/table.jsx",
+        "style": "w-full caption-bottom text-sm border-collapse"
+      },
+      "Dialog": {
+        "path": "src/components/ui/dialog.jsx",
+        "style": "Generic shadcn dialog"
+      }
+    },
+    "custom": {
+      "CameraCapture": {
+        "description": "A dedicated component for capturing visitor photos",
+        "features": [
+          "Live preview with 'Frame Face' overlay (dashed border)",
+          "Capture button (Circle with ring)",
+          "Retake option",
+          "Fallback for no camera access"
+        ]
+      },
+      "StatusToggle": {
+        "description": "Switch for Pejabat status (Hadir/Tidak Hadir)",
+        "style": "Green (Hadir) vs Gray/Red (Tidak Hadir) pill toggle"
+      }
+    }
+  },
+  "image_urls": {
+    "backgrounds": {
+      "login_cover": "https://images.unsplash.com/photo-1670262338361-f024287fcc2d?auto=format&fit=crop&q=80",
+      "dashboard_texture": "https://images.unsplash.com/photo-1610404899669-3fe640fdbc5a?auto=format&fit=crop&q=80"
+    },
+    "placeholders": {
+      "avatar": "https://ui-avatars.com/api/?background=0D8ABC&color=fff&name=User"
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. SETUP: Ensure 'react-router-dom', 'lucide-react', '@radix-ui/react-slot', 'clsx', 'tailwind-merge' are installed.",
+    "2. DATABASE: Initialize Supabase client in 'src/lib/supabase.js'. Create tables: 'visitors' (id, created_at, name, phone, agency, purpose, official_id, photo_url, followers_count), 'officials' (id, name, position_id, status, is_available), 'positions' (id, title).",
+    "3. ROUTING: Use 'react-router-dom' for routes: /form, /admin/login, /admin/* (protected).",
+    "4. FORM: Build the visitor form as a multi-step process or a clean long-scroll card. Focus on large inputs for tablet users. Camera capture is CRITICAL.",
+    "5. DASHBOARD: The admin dashboard must auto-refresh or use Supabase realtime subscription for new visitors.",
+    "6. WHATSAPP: The visitor table must generate a wa.me link: `https://wa.me/${phone}?text=Hello ${name}, ...`",
+    "7. STYLE: Use the defined 'Swiss Digital Bureau' theme. Strict whitespace, high contrast text.",
+    "8. MOCK: If Supabase credentials are missing, mock the data layer but build the full UI structure."
+  ],
+  "universal_guidelines": [
+    "DO NOT use gradients for text.",
+    "DO NOT use 'Inter' for headings if possible, but if constrained, use 'font-bold tracking-tight'.",
+    "Ensure all interactive elements have 'cursor-pointer'.",
+    "Add 'data-testid' to all inputs and buttons.",
+    "Mobile First: Ensure the form works perfectly on a 375px width screen."
+  ]
+}
