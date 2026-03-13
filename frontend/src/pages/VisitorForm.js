@@ -29,6 +29,7 @@ export const VisitorForm = () => {
   }, [])
 
   const fetchPejabat = async () => {
+    console.log('Fetching pejabat list...')
     const { data, error } = await supabase
       .from('pejabat')
       .select('id_pejabat, nama, status')
@@ -36,8 +37,13 @@ export const VisitorForm = () => {
     
     if (error) {
       console.error('Error fetching pejabat:', error)
+      toast.error('Gagal memuat daftar pejabat. Pastikan tabel sudah dibuat.')
     } else {
+      console.log('Pejabat loaded:', data?.length, 'records')
       setPejabatList(data || [])
+      if (!data || data.length === 0) {
+        toast.error('Belum ada data pejabat. Silakan tambahkan pejabat melalui admin dashboard.')
+      }
     }
   }
 
@@ -94,15 +100,19 @@ export const VisitorForm = () => {
     setLoading(true)
 
     try {
+      console.log('Starting photo upload...')
       const photoUrl = await uploadPhoto()
       
       if (!photoUrl) {
-        toast.error('Gagal mengunggah foto. Pastikan storage bucket sudah dibuat.')
+        toast.error('Gagal mengunggah foto. Pastikan storage bucket "guest-photos" sudah dibuat dan bersifat public.')
         setLoading(false)
         return
       }
+      
+      console.log('Photo uploaded successfully:', photoUrl)
+      console.log('Inserting visitor data...')
 
-      const { error } = await supabase.from('tamu').insert({
+      const insertData = {
         nama: formData.nama,
         asal: formData.asal,
         no_hp: formData.no_hp,
@@ -110,10 +120,20 @@ export const VisitorForm = () => {
         tujuan_pejabat: formData.tujuan_pejabat,
         foto_url: photoUrl,
         jumlah_pengikut: formData.jumlah_pengikut ? parseInt(formData.jumlah_pengikut) : null
-      })
+      }
+      
+      console.log('Data to insert:', insertData)
 
-      if (error) throw error
+      const { data, error } = await supabase.from('tamu').insert(insertData)
 
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
+      
+      console.log('Insert successful:', data)
+
+      toast.success('Data berhasil disimpan!')
       setSuccess(true)
       setTimeout(() => {
         setFormData({
@@ -128,11 +148,29 @@ export const VisitorForm = () => {
         setSuccess(false)
       }, 3000)
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Full error object:', error)
+      
+      if (error.message) {
+        console.error('Error message:', error.message)
+      }
+      
+      if (error.code) {
+        console.error('Error code:', error.code)
+      }
+      
+      // Specific error messages
       if (error.message && error.message.includes('storage')) {
         toast.error('Gagal mengunggah foto. Pastikan storage bucket "guest-photos" sudah dibuat dan bersifat public.')
+      } else if (error.code === '42P01') {
+        toast.error('Tabel "tamu" belum dibuat. Silakan jalankan SQL schema di Supabase Dashboard terlebih dahulu.')
+      } else if (error.code === '23503') {
+        toast.error('Pejabat yang dipilih tidak valid. Silakan pilih pejabat lain.')
+      } else if (error.message && error.message.includes('violates row-level security')) {
+        toast.error('Permission denied. Silakan periksa RLS policies di Supabase.')
+      } else if (error.message && error.message.includes('relation')) {
+        toast.error('Database belum siap. Pastikan tabel sudah dibuat dengan menjalankan database_schema.sql')
       } else {
-        toast.error('Terjadi kesalahan saat menyimpan data')
+        toast.error(`Terjadi kesalahan: ${error.message || 'Unknown error'}`)
       }
     } finally {
       setLoading(false)
