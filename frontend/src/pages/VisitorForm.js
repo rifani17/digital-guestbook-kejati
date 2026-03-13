@@ -55,7 +55,26 @@ export const VisitorForm = () => {
     if (!photo) return null
 
     try {
+      console.log('=== UPLOAD PHOTO DEBUG ===')
+      
+      // Check if bucket exists first
+      console.log('Checking if bucket exists...')
+      const { data: bucketData, error: bucketError } = await supabase.storage.getBucket('guest-photos')
+      
+      if (bucketError) {
+        console.error('Bucket check error:', bucketError)
+        throw new Error(`Bucket 'guest-photos' tidak ditemukan. Silakan buat bucket terlebih dahulu.`)
+      }
+      
+      console.log('Bucket exists:', bucketData)
+      
+      // Convert base64 to blob
+      console.log('Converting photo to blob...')
       const base64Data = photo.split(',')[1]
+      if (!base64Data) {
+        throw new Error('Invalid photo format')
+      }
+      
       const byteCharacters = atob(base64Data)
       const byteNumbers = new Array(byteCharacters.length)
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -63,24 +82,51 @@ export const VisitorForm = () => {
       }
       const byteArray = new Uint8Array(byteNumbers)
       const blob = new Blob([byteArray], { type: 'image/jpeg' })
+      
+      console.log('Blob created:', {
+        size: blob.size,
+        type: blob.type,
+        sizeMB: (blob.size / 1024 / 1024).toFixed(2)
+      })
+      
+      // Check file size (max 5MB)
+      if (blob.size > 5 * 1024 * 1024) {
+        throw new Error('Ukuran foto terlalu besar. Maksimal 5MB.')
+      }
 
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`
+      console.log('Uploading file:', fileName)
       
       const { data, error } = await supabase.storage
         .from('guest-photos')
         .upload(fileName, blob, {
           contentType: 'image/jpeg',
-          upsert: false
+          upsert: false,
+          cacheControl: '3600'
         })
 
       if (error) {
-        console.error('Storage upload error:', error)
+        console.error('Storage upload error details:', {
+          message: error.message,
+          statusCode: error.statusCode,
+          error: error
+        })
+        
+        if (error.statusCode === 400) {
+          throw new Error('Format foto tidak valid atau bucket tidak dikonfigurasi dengan benar. Pastikan bucket bersifat PUBLIC.')
+        }
+        
         throw error
       }
+      
+      console.log('Upload successful:', data)
 
       const { data: { publicUrl } } = supabase.storage
         .from('guest-photos')
         .getPublicUrl(fileName)
+      
+      console.log('Public URL:', publicUrl)
+      console.log('=== UPLOAD COMPLETE ===')
 
       return publicUrl
     } catch (error) {
