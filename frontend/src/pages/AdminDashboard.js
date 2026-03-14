@@ -14,20 +14,38 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Users, Calendar, LogOut, UserCog, Briefcase, UserPlus, Menu, UserCheck, TrendingUp, Edit, Trash2, Eye } from 'lucide-react'
 import { format, subDays, startOfDay, startOfMonth } from 'date-fns'
 import { id } from 'date-fns/locale'
-import { formatInTimeZone } from 'date-fns-tz'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { toast } from 'sonner'
 
 // Helper function to format date in local timezone
-const formatLocalTime = (dateString, formatStr = 'dd MMM yyyy HH:mm') => {
+const formatLocalTime = (dateString, formatType = 'short') => {
   try {
     const date = new Date(dateString)
-    // Get user's timezone automatically
-    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    return formatInTimeZone(date, userTimezone, formatStr, { locale: id })
+    
+    if (formatType === 'short') {
+      // Format: 14 Mar 2026 16:20
+      return date.toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      })
+    } else {
+      // Format: 14 Maret 2026, 16:20
+      return date.toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      })
+    }
   } catch (error) {
     console.error('Error formatting date:', error)
-    return format(new Date(dateString), formatStr, { locale: id })
+    return dateString
   }
 }
 
@@ -554,7 +572,7 @@ Silakan menuju resepsionis.`
                   {visitors.map((visitor) => (
                     <TableRow key={visitor.id_tamu}>
                       <TableCell className="whitespace-nowrap">
-                        {formatLocalTime(visitor.tanggal, 'dd MMM yyyy HH:mm')}
+                        {formatLocalTime(visitor.tanggal, 'short')}
                       </TableCell>
                       <TableCell className="font-medium">{visitor.nama}</TableCell>
                       <TableCell>{visitor.asal}</TableCell>
@@ -766,7 +784,7 @@ Silakan menuju resepsionis.`
                   <div className="space-y-1">
                     <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Waktu Kunjungan</Label>
                     <p className="text-base text-slate-900">
-                      {formatLocalTime(previewingVisitor.tanggal, 'dd MMMM yyyy, HH:mm')}
+                      {formatLocalTime(previewingVisitor.tanggal, 'long')}
                     </p>
                   </div>
                   <div className="space-y-1">
