@@ -49,10 +49,10 @@ export const CameraCapture = ({ onCapture }) => {
   if (imgSrc) {
     return (
       <div className="space-y-3">
-        <div className="relative w-full aspect-video bg-slate-900 rounded-xl overflow-hidden">
+        <div className="relative w-full max-w-xs mx-auto aspect-[3/4] bg-slate-900 rounded-xl overflow-hidden">
           <img src={imgSrc} alt="Foto yang diambil" className="w-full h-full object-cover" />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 max-w-xs mx-auto">
           <Button
             type="button"
             onClick={retake}
@@ -83,7 +83,7 @@ export const CameraCapture = ({ onCapture }) => {
     <>
       <div 
         onClick={openCamera}
-        className="w-full aspect-video bg-slate-100 rounded-xl flex items-center justify-center border-2 border-dashed border-slate-300 cursor-pointer hover:border-emerald-500 hover:bg-slate-50 transition-colors"
+        className="w-full max-w-xs mx-auto aspect-[3/4] bg-slate-100 rounded-xl flex items-center justify-center border-2 border-dashed border-slate-300 cursor-pointer hover:border-emerald-500 hover:bg-slate-50 transition-colors"
       >
         <div className="text-center">
           <Camera className="w-12 h-12 text-slate-400 mx-auto mb-2" />
@@ -94,7 +94,7 @@ export const CameraCapture = ({ onCapture }) => {
 
       {/* Camera Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-lg p-0 overflow-hidden">
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden">
           <DialogHeader className="p-4 pb-0">
             <DialogTitle className="flex items-center gap-2">
               <Camera className="w-5 h-5 text-emerald-600" />
@@ -104,7 +104,7 @@ export const CameraCapture = ({ onCapture }) => {
           
           <div className="p-4 space-y-4">
             {cameraError ? (
-              <div className="w-full aspect-video bg-slate-100 rounded-xl flex items-center justify-center">
+              <div className="w-full aspect-[3/4] bg-slate-100 rounded-xl flex items-center justify-center">
                 <div className="text-center">
                   <Camera className="w-12 h-12 text-slate-400 mx-auto mb-2" />
                   <p className="text-sm text-slate-500">Kamera tidak tersedia</p>
@@ -112,7 +112,7 @@ export const CameraCapture = ({ onCapture }) => {
                 </div>
               </div>
             ) : (
-              <div className="relative w-full aspect-video bg-slate-900 rounded-xl overflow-hidden">
+              <div className="relative w-full aspect-[3/4] bg-slate-900 rounded-xl overflow-hidden">
                 <Webcam
                   ref={webcamRef}
                   audio={false}
@@ -121,8 +121,9 @@ export const CameraCapture = ({ onCapture }) => {
                   onUserMediaError={handleUserMediaError}
                   onUserMedia={handleUserMedia}
                   videoConstraints={{
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
+                    width: { ideal: 720 },
+                    height: { ideal: 960 },
+                    aspectRatio: 3/4
                   }}
                 />
                 {!isCameraReady && (
@@ -133,7 +134,7 @@ export const CameraCapture = ({ onCapture }) => {
                     </div>
                   </div>
                 )}
-                <div className="absolute inset-0 border-2 border-dashed border-white/30 m-6 rounded-lg pointer-events-none" />
+                <div className="absolute inset-0 border-2 border-dashed border-white/30 m-4 rounded-lg pointer-events-none" />
               </div>
             )}
             
