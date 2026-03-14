@@ -14,8 +14,22 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Users, Calendar, LogOut, UserCog, Briefcase, UserPlus, Menu, UserCheck, TrendingUp, Edit, Trash2, Eye } from 'lucide-react'
 import { format, subDays, startOfDay, startOfMonth } from 'date-fns'
 import { id } from 'date-fns/locale'
+import { formatInTimeZone } from 'date-fns-tz'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { toast } from 'sonner'
+
+// Helper function to format date in local timezone
+const formatLocalTime = (dateString, formatStr = 'dd MMM yyyy HH:mm') => {
+  try {
+    const date = new Date(dateString)
+    // Get user's timezone automatically
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    return formatInTimeZone(date, userTimezone, formatStr, { locale: id })
+  } catch (error) {
+    console.error('Error formatting date:', error)
+    return format(new Date(dateString), formatStr, { locale: id })
+  }
+}
 
 export const AdminDashboard = () => {
   const [visitors, setVisitors] = useState([])
@@ -540,7 +554,7 @@ Silakan menuju resepsionis.`
                   {visitors.map((visitor) => (
                     <TableRow key={visitor.id_tamu}>
                       <TableCell className="whitespace-nowrap">
-                        {format(new Date(visitor.tanggal), 'dd MMM yyyy HH:mm', { locale: id })}
+                        {formatLocalTime(visitor.tanggal, 'dd MMM yyyy HH:mm')}
                       </TableCell>
                       <TableCell className="font-medium">{visitor.nama}</TableCell>
                       <TableCell>{visitor.asal}</TableCell>
@@ -752,7 +766,7 @@ Silakan menuju resepsionis.`
                   <div className="space-y-1">
                     <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Waktu Kunjungan</Label>
                     <p className="text-base text-slate-900">
-                      {format(new Date(previewingVisitor.tanggal), 'dd MMMM yyyy, HH:mm', { locale: id })}
+                      {formatLocalTime(previewingVisitor.tanggal, 'dd MMMM yyyy, HH:mm')}
                     </p>
                   </div>
                   <div className="space-y-1">

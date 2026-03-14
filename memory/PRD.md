@@ -79,8 +79,11 @@ jumlah_pengikut INTEGER
 - [x] Edit & Delete Guest Data di Admin Dashboard
 - [x] Field Foto KTP (Opsional) di Form Pengunjung
 - [x] Kolom Foto KTP di Tabel Admin Dashboard
-- [x] **Storage bucket `ktp-photos` untuk foto KTP**
-- [x] **Modal Preview Detail Tamu dengan foto dan info lengkap**
+- [x] Storage bucket `ktp-photos` untuk foto KTP
+- [x] Modal Preview Detail Tamu dengan foto dan info lengkap
+- [x] Tombol WhatsApp di Modal Preview
+- [x] Kamera dengan Modal (tidak langsung akses)
+- [x] Timezone otomatis sesuai lokasi user (date-fns-tz)
 
 ### Backlog (P1)
 - [ ] Fitur export data pengunjung ke Excel/CSV
