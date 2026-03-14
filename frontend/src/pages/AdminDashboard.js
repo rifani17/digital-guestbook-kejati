@@ -20,7 +20,9 @@ import { toast } from 'sonner'
 // Helper function to format date in local timezone
 const formatLocalTime = (dateString, formatType = 'short') => {
   try {
-    const date = new Date(dateString)
+    // Supabase returns UTC time without 'Z', so we need to append it
+    const utcDateString = dateString.endsWith('Z') ? dateString : dateString + 'Z'
+    const date = new Date(utcDateString)
     
     if (formatType === 'short') {
       // Format: 14 Mar 2026 16:20
@@ -326,20 +328,44 @@ Silakan menuju resepsionis.`
     }
   }
 
-  const handleDeleteVisitor = async (visitorId, visitorName) => {
-    if (!window.confirm(`Yakin ingin menghapus data tamu "${visitorName}"?`)) {
+  const handleDeleteVisitor = async (visitor) => {
+    if (!window.confirm(`Yakin ingin menghapus data tamu "${visitor.nama}"?`)) {
       return
     }
 
     try {
+      // Delete photos from storage first
+      if (visitor.foto_url) {
+        try {
+          // Extract filename from URL
+          const fotoFileName = visitor.foto_url.split('/').pop()
+          await supabase.storage.from('guest-photos').remove([fotoFileName])
+          console.log('Foto pengunjung dihapus:', fotoFileName)
+        } catch (photoError) {
+          console.error('Error deleting visitor photo:', photoError)
+        }
+      }
+
+      if (visitor.foto_ktp_url) {
+        try {
+          // Extract filename from URL
+          const ktpFileName = visitor.foto_ktp_url.split('/').pop()
+          await supabase.storage.from('ktp-photos').remove([ktpFileName])
+          console.log('Foto KTP dihapus:', ktpFileName)
+        } catch (ktpError) {
+          console.error('Error deleting KTP photo:', ktpError)
+        }
+      }
+
+      // Delete visitor record from database
       const { error } = await supabase
         .from('tamu')
         .delete()
-        .eq('id_tamu', visitorId)
+        .eq('id_tamu', visitor.id_tamu)
 
       if (error) throw error
 
-      toast.success('Data tamu berhasil dihapus')
+      toast.success('Data tamu dan foto berhasil dihapus')
       fetchVisitors()
       fetchStats() // Update stats after delete
     } catch (error) {
@@ -611,7 +637,7 @@ Silakan menuju resepsionis.`
                             Edit
                           </Button>
                           <Button
-                            onClick={() => handleDeleteVisitor(visitor.id_tamu, visitor.nama)}
+                            onClick={() => handleDeleteVisitor(visitor)}
                             variant="outline"
                             size="sm"
                             className="h-9 text-red-600 hover:text-red-700 hover:border-red-300"
