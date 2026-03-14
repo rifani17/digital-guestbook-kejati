@@ -20,6 +20,7 @@ export const VisitorForm = () => {
     jumlah_pengikut: ''
   })
   const [photo, setPhoto] = useState(null)
+  const [ktpPhoto, setKtpPhoto] = useState(null)
   const [pejabatList, setPejabatList] = useState([])
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -154,6 +155,54 @@ export const VisitorForm = () => {
     }
   }
 
+  const uploadKtpPhoto = async () => {
+    if (!ktpPhoto) return null
+
+    try {
+      console.log('Starting KTP photo upload...')
+      
+      // Resize and convert image to WebP
+      const webpBlob = await resizeAndConvertImage(ktpPhoto)
+      
+      if (!webpBlob) {
+        throw new Error('Failed to process KTP image')
+      }
+      
+      // Generate unique filename
+      const fileName = `ktp-${Date.now()}-${Math.random().toString(36).substring(2)}.webp`
+      console.log('Uploading KTP to Supabase...', fileName)
+      
+      // Direct upload to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('guest-photos')
+        .upload(fileName, webpBlob, {
+          contentType: 'image/webp',
+          upsert: false,
+          cacheControl: '3600'
+        })
+
+      if (error) {
+        console.error('KTP upload error:', error)
+        throw new Error(`KTP upload failed: ${error.message}`)
+      }
+      
+      console.log('KTP upload successful:', data)
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('guest-photos')
+        .getPublicUrl(fileName)
+      
+      console.log('KTP public URL generated:', publicUrl)
+
+      return publicUrl
+    } catch (error) {
+      console.error('Error in uploadKtpPhoto:', error)
+      throw error
+    }
+  }
+
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     
@@ -161,6 +210,7 @@ export const VisitorForm = () => {
 
     try {
       let photoUrl = null
+      let ktpPhotoUrl = null
       
       // Try to upload photo if available (optional)
       if (photo) {
@@ -171,10 +221,21 @@ export const VisitorForm = () => {
         } catch (photoError) {
           console.error('Photo upload failed, continuing without photo:', photoError)
           toast.error('Foto gagal diupload, data akan disimpan tanpa foto')
-          // Continue without photo - don't throw error
         }
       } else {
         console.log('No photo provided, saving without photo')
+      }
+
+      // Try to upload KTP photo if available (optional)
+      if (ktpPhoto) {
+        try {
+          console.log('Attempting to upload KTP photo...')
+          ktpPhotoUrl = await uploadKtpPhoto()
+          console.log('KTP photo uploaded successfully:', ktpPhotoUrl)
+        } catch (ktpError) {
+          console.error('KTP photo upload failed, continuing without KTP:', ktpError)
+          toast.error('Foto KTP gagal diupload, data akan disimpan tanpa foto KTP')
+        }
       }
 
       const insertData = {
@@ -183,7 +244,8 @@ export const VisitorForm = () => {
         no_hp: formData.no_hp,
         keperluan: formData.keperluan,
         tujuan_pejabat: formData.tujuan_pejabat,
-        foto_url: photoUrl, // Can be null
+        foto_url: photoUrl,
+        foto_ktp_url: ktpPhotoUrl,
         jumlah_pengikut: formData.jumlah_pengikut ? parseInt(formData.jumlah_pengikut) : null
       }
       
@@ -210,6 +272,7 @@ export const VisitorForm = () => {
           jumlah_pengikut: ''
         })
         setPhoto(null)
+        setKtpPhoto(null)
         setSuccess(false)
       }, 3000)
     } catch (error) {
@@ -352,6 +415,68 @@ export const VisitorForm = () => {
                 <Label className="text-sm font-medium text-slate-700">Foto (Opsional)</Label>
                 <p className="text-xs text-slate-500 mb-2">Foto tidak wajib diisi</p>
                 <CameraCapture onCapture={setPhoto} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="foto_ktp" className="text-sm font-medium text-slate-700">Foto KTP (Opsional)</Label>
+                <p className="text-xs text-slate-500 mb-2">Upload foto KTP untuk verifikasi identitas</p>
+                <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:border-emerald-500 transition-colors">
+                  <Input
+                    id="foto_ktp"
+                    data-testid="foto-ktp-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onloadend = () => {
+                          setKtpPhoto(reader.result)
+                        }
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                  />
+                  {ktpPhoto ? (
+                    <div className="space-y-3">
+                      <img 
+                        src={ktpPhoto} 
+                        alt="Preview KTP" 
+                        className="max-h-40 mx-auto rounded-lg shadow-md"
+                      />
+                      <div className="flex gap-2 justify-center">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => document.getElementById('foto_ktp').click()}
+                        >
+                          Ganti Foto
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() => setKtpPhoto(null)}
+                        >
+                          Hapus
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label htmlFor="foto_ktp" className="cursor-pointer block py-4">
+                      <div className="text-slate-500">
+                        <svg className="w-10 h-10 mx-auto mb-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-sm font-medium">Klik untuk upload foto KTP</span>
+                        <p className="text-xs text-slate-400 mt-1">JPG, PNG atau WebP</p>
+                      </div>
+                    </label>
+                  )}
+                </div>
               </div>
 
               <Button

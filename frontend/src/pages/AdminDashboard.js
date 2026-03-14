@@ -525,6 +525,7 @@ Silakan menuju resepsionis.`
                     <TableHead>Pejabat Dituju</TableHead>
                     <TableHead>Keperluan</TableHead>
                     <TableHead>Foto</TableHead>
+                    <TableHead>Foto KTP</TableHead>
                     <TableHead>Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -541,6 +542,11 @@ Silakan menuju resepsionis.`
                       <TableCell>
                         {visitor.foto_url && (
                           <img src={visitor.foto_url} alt={visitor.nama} className="w-12 h-12 rounded-lg object-cover" />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {visitor.foto_ktp_url && (
+                          <img src={visitor.foto_ktp_url} alt={`KTP ${visitor.nama}`} className="w-12 h-12 rounded-lg object-cover" />
                         )}
                       </TableCell>
                       <TableCell>

@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS public.tamu (
     keperluan TEXT NOT NULL,
     tujuan_pejabat UUID REFERENCES public.pejabat(id_pejabat) ON DELETE SET NULL,
     foto_url TEXT,
+    foto_ktp_url TEXT,
     jumlah_pengikut INTEGER,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
