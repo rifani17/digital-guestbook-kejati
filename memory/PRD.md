@@ -77,12 +77,13 @@ jumlah_pengikut INTEGER
 - [x] Error Handling untuk upload foto
 - [x] Project Migration Preparation
 - [x] Edit & Delete Guest Data di Admin Dashboard
-- [x] **Field Foto KTP (Opsional) di Form Pengunjung**
-- [x] **Kolom Foto KTP di Tabel Admin Dashboard**
+- [x] Field Foto KTP (Opsional) di Form Pengunjung
+- [x] Kolom Foto KTP di Tabel Admin Dashboard
+- [x] **Storage bucket `ktp-photos` untuk foto KTP**
+- [x] **Modal Preview Detail Tamu dengan foto dan info lengkap**
 
 ### Backlog (P1)
-- [ ] Storage bucket terpisah untuk foto KTP dengan policy keamanan
-- [ ] Display foto KTP di modal edit tamu
+- [ ] Fitur export data pengunjung ke Excel/CSV
 
 ### Future Tasks (P2)
 - [ ] PWA Configuration

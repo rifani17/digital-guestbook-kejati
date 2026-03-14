@@ -172,9 +172,9 @@ export const VisitorForm = () => {
       const fileName = `ktp-${Date.now()}-${Math.random().toString(36).substring(2)}.webp`
       console.log('Uploading KTP to Supabase...', fileName)
       
-      // Direct upload to Supabase storage
+      // Direct upload to Supabase storage (ktp-photos bucket)
       const { data, error } = await supabase.storage
-        .from('guest-photos')
+        .from('ktp-photos')
         .upload(fileName, webpBlob, {
           contentType: 'image/webp',
           upsert: false,
@@ -190,7 +190,7 @@ export const VisitorForm = () => {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('guest-photos')
+        .from('ktp-photos')
         .getPublicUrl(fileName)
       
       console.log('KTP public URL generated:', publicUrl)

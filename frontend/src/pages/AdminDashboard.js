@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu'
-import { Users, Calendar, LogOut, UserCog, Briefcase, UserPlus, Menu, UserCheck, TrendingUp, Edit, Trash2 } from 'lucide-react'
+import { Users, Calendar, LogOut, UserCog, Briefcase, UserPlus, Menu, UserCheck, TrendingUp, Edit, Trash2, Eye } from 'lucide-react'
 import { format, subDays, startOfDay, startOfMonth } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
@@ -24,6 +24,8 @@ export const AdminDashboard = () => {
   const [chartData, setChartData] = useState([])
   const [chartFilter, setChartFilter] = useState('today')
   const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
+  const [previewingVisitor, setPreviewingVisitor] = useState(null)
   const [editingVisitor, setEditingVisitor] = useState(null)
   const [editFormData, setEditFormData] = useState({
     nama: '',
@@ -257,6 +259,11 @@ Silakan menuju resepsionis.`
       jumlah_pengikut: visitor.jumlah_pengikut || ''
     })
     setEditDialogOpen(true)
+  }
+
+  const handlePreviewVisitor = (visitor) => {
+    setPreviewingVisitor(visitor)
+    setPreviewDialogOpen(true)
   }
 
   const handleUpdateVisitor = async () => {
@@ -552,6 +559,16 @@ Silakan menuju resepsionis.`
                       <TableCell>
                         <div className="flex gap-2">
                           <Button
+                            onClick={() => handlePreviewVisitor(visitor)}
+                            variant="outline"
+                            size="sm"
+                            className="h-9"
+                            data-testid="preview-visitor-button"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Preview
+                          </Button>
+                          <Button
                             onClick={() => handleEditVisitor(visitor)}
                             variant="outline"
                             size="sm"
@@ -678,6 +695,106 @@ Silakan menuju resepsionis.`
                 className="bg-emerald-700 hover:bg-emerald-800"
               >
                 Simpan Perubahan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Preview Visitor Dialog */}
+        <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+          <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl">Detail Tamu</DialogTitle>
+              <DialogDescription>
+                Informasi lengkap pengunjung
+              </DialogDescription>
+            </DialogHeader>
+            {previewingVisitor && (
+              <div className="space-y-6 py-4">
+                {/* Photos Section */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-600">Foto Pengunjung</Label>
+                    {previewingVisitor.foto_url ? (
+                      <img 
+                        src={previewingVisitor.foto_url} 
+                        alt={previewingVisitor.nama}
+                        className="w-full h-48 object-cover rounded-lg border border-slate-200"
+                      />
+                    ) : (
+                      <div className="w-full h-48 bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200">
+                        <span className="text-slate-400 text-sm">Tidak ada foto</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-600">Foto KTP</Label>
+                    {previewingVisitor.foto_ktp_url ? (
+                      <img 
+                        src={previewingVisitor.foto_ktp_url} 
+                        alt={`KTP ${previewingVisitor.nama}`}
+                        className="w-full h-48 object-cover rounded-lg border border-slate-200"
+                      />
+                    ) : (
+                      <div className="w-full h-48 bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200">
+                        <span className="text-slate-400 text-sm">Tidak ada foto KTP</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Info Section */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Nama Lengkap</Label>
+                    <p className="text-base font-semibold text-slate-900">{previewingVisitor.nama}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Waktu Kunjungan</Label>
+                    <p className="text-base text-slate-900">
+                      {format(new Date(previewingVisitor.tanggal), 'dd MMMM yyyy, HH:mm', { locale: id })}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Asal / Instansi</Label>
+                    <p className="text-base text-slate-900">{previewingVisitor.asal}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Nomor HP</Label>
+                    <p className="text-base text-slate-900">{previewingVisitor.no_hp}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Tujuan Pejabat</Label>
+                    <p className="text-base text-slate-900">{previewingVisitor.pejabat?.nama || '-'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Jumlah Pengikut</Label>
+                    <p className="text-base text-slate-900">{previewingVisitor.jumlah_pengikut || '0'} orang</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Keperluan</Label>
+                  <p className="text-base text-slate-900 bg-slate-50 p-3 rounded-lg">{previewingVisitor.keperluan}</p>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setPreviewDialogOpen(false)}
+              >
+                Tutup
+              </Button>
+              <Button
+                onClick={() => {
+                  setPreviewDialogOpen(false)
+                  handleEditVisitor(previewingVisitor)
+                }}
+                className="bg-emerald-700 hover:bg-emerald-800"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Data
               </Button>
             </DialogFooter>
           </DialogContent>
