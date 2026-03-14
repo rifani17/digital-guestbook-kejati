@@ -121,9 +121,8 @@ export const CameraCapture = ({ onCapture }) => {
                   onUserMediaError={handleUserMediaError}
                   onUserMedia={handleUserMedia}
                   videoConstraints={{
-                    facingMode: "user",
-                    width: 1280,
-                    height: 720
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
                   }}
                 />
                 {!isCameraReady && (
