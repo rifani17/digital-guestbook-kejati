@@ -249,7 +249,7 @@ export const AdminDashboard = () => {
   const sendWhatsApp = (visitor) => {
     if (!visitor.pejabat?.no_hp) return
 
-    const message = `Halo Bapak/Ibu ${visitor.pejabat.nama}
+    const message = `Selamat pagi Bapak/Ibu ${visitor.pejabat.nama}
 
 Ada tamu yang ingin bertemu.
 
@@ -257,7 +257,7 @@ Nama: ${visitor.nama}
 Asal: ${visitor.asal}
 Keperluan: ${visitor.keperluan}
 
-Silakan menuju resepsionis.`
+Mohon arahan.`
 
     const encodedMessage = encodeURIComponent(message)
     const phone = visitor.pejabat.no_hp.replace(/^0/, '62')
@@ -328,42 +328,69 @@ Silakan menuju resepsionis.`
     }
   }
 
-  const handleDeleteVisitor = async (visitor) => {
-    if (!window.confirm(`Yakin ingin menghapus data tamu "${visitor.nama}"?`)) {
+  const handleDeleteVisitor = async (visitorObj) => {
+    if (!window.confirm(`Yakin ingin menghapus data tamu "${visitorObj.nama}"?`)) {
       return
     }
 
     try {
-      // Delete photos from storage first
-      if (visitor.foto_url) {
-        try {
-          // Extract filename from URL
-          const fotoFileName = visitor.foto_url.split('/').pop()
-          await supabase.storage.from('guest-photos').remove([fotoFileName])
-          console.log('Foto pengunjung dihapus:', fotoFileName)
-        } catch (photoError) {
-          console.error('Error deleting visitor photo:', photoError)
+      // 1. Fetch latest visitor data to get the correct photo URLs
+      const { data: currentVisitor, error: fetchError } = await supabase
+        .from('tamu')
+        .select('foto_url, foto_ktp_url')
+        .eq('id_tamu', visitorObj.id_tamu)
+        .single()
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error fetching visitor for deletion:', fetchError)
+        throw fetchError
+      }
+
+      const fotoUrl = currentVisitor?.foto_url
+      const fotoKtpUrl = currentVisitor?.foto_ktp_url
+
+      // Helper to extract bucket path from URL or filename
+      const extractFileName = (url) => url ? url.split('/').pop().split('?')[0] : null
+
+      // 2. Delete visitor photo
+      if (fotoUrl) {
+        const fotoFileName = extractFileName(fotoUrl)
+        if (fotoFileName) {
+          const { error: removeError } = await supabase.storage
+            .from('guest-photos')
+            .remove([fotoFileName])
+            
+          if (removeError) {
+            console.error('Error deleting visitor photo:', removeError)
+          } else {
+            console.log('Foto pengunjung dihapus:', fotoFileName)
+          }
         }
       }
 
-      if (visitor.foto_ktp_url) {
-        try {
-          // Extract filename from URL
-          const ktpFileName = visitor.foto_ktp_url.split('/').pop()
-          await supabase.storage.from('ktp-photos').remove([ktpFileName])
-          console.log('Foto KTP dihapus:', ktpFileName)
-        } catch (ktpError) {
-          console.error('Error deleting KTP photo:', ktpError)
+      // 3. Delete KTP photo
+      if (fotoKtpUrl) {
+        const ktpFileName = extractFileName(fotoKtpUrl)
+        if (ktpFileName) {
+          const { error: removeError } = await supabase.storage
+            .from('ktp-photos')
+            .remove([ktpFileName])
+            
+          if (removeError) {
+            console.error('Error deleting KTP photo:', removeError)
+          } else {
+            console.log('Foto KTP dihapus:', ktpFileName)
+          }
         }
       }
 
-      // Delete visitor record from database
-      const { error } = await supabase
+      // 4. Delete visitor record from database
+      const { error: deleteError } = await supabase
         .from('tamu')
         .delete()
-        .eq('id_tamu', visitor.id_tamu)
+        .eq('id_tamu', visitorObj.id_tamu)
 
-      if (error) throw error
+      if (deleteError) throw deleteError
 
       toast.success('Data tamu dan foto berhasil dihapus')
       fetchVisitors()
@@ -394,7 +421,7 @@ Silakan menuju resepsionis.`
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex gap-3">
-              <Link to="/admin/tamu/new">
+              <Link to="/form">
                 <Button className="h-10 bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold shadow-lg" data-testid="tambah-tamu-button">
                   <UserPlus className="w-4 h-4 mr-2" />
                   Tambah Tamu
@@ -428,7 +455,7 @@ Silakan menuju resepsionis.`
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem asChild>
-                    <Link to="/admin/tamu/new" className="flex items-center cursor-pointer">
+                    <Link to="/form" className="flex items-center cursor-pointer">
                       <UserPlus className="w-4 h-4 mr-2" />
                       Tambah Tamu
                     </Link>
