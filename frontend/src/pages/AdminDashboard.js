@@ -191,7 +191,8 @@ export const AdminDashboard = () => {
       }))
       
       data.forEach(visitor => {
-        const hour = new Date(visitor.tanggal).getHours()
+        const utcDateString = visitor.tanggal.endsWith('Z') ? visitor.tanggal : visitor.tanggal + 'Z'
+        const hour = new Date(utcDateString).getHours()
         hours[hour].value++
       })
       
@@ -217,7 +218,8 @@ export const AdminDashboard = () => {
       }
       
       data.forEach(visitor => {
-        const date = format(new Date(visitor.tanggal), 'yyyy-MM-dd')
+        const utcDateString = visitor.tanggal.endsWith('Z') ? visitor.tanggal : visitor.tanggal + 'Z'
+        const date = format(new Date(utcDateString), 'yyyy-MM-dd')
         const dayIndex = days.findIndex(d => d.fullDate === date)
         if (dayIndex !== -1) {
           days[dayIndex].value++
