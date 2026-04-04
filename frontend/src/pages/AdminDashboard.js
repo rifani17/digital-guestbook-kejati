@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu'
-import { Users, Calendar, LogOut, UserCog, Briefcase, UserPlus, Menu, UserCheck, TrendingUp, Edit, Trash2, Eye } from 'lucide-react'
+import { Users, Calendar, LogOut, UserCog, Briefcase, UserPlus, Menu, UserCheck, TrendingUp, Edit, Trash2, Eye, Search } from 'lucide-react'
 import { format, subDays, startOfDay, startOfMonth } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
@@ -55,6 +55,7 @@ export const AdminDashboard = () => {
   const [visitors, setVisitors] = useState([])
   const [stats, setStats] = useState({ today: 0, thisMonth: 0, presentOfficials: 0 })
   const [pejabatStatus, setPejabatStatus] = useState([])
+  const [pejabatSearchTerm, setPejabatSearchTerm] = useState('')
   const [chartData, setChartData] = useState([])
   const [chartFilter, setChartFilter] = useState('today')
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -404,6 +405,10 @@ Mohon arahan.`
   }
 
 
+  const filteredPejabatStatus = pejabatStatus.filter((pejabat) =>
+    pejabat.nama.toLowerCase().includes(pejabatSearchTerm.toLowerCase())
+  )
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="bg-gradient-to-r from-emerald-700 to-emerald-800 border-b border-emerald-900 shadow-lg">
@@ -587,18 +592,34 @@ Mohon arahan.`
 
         {/* Pejabat Status */}
         <Card className="shadow-sm border-slate-200 mb-8">
-          <CardHeader>
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <CardTitle className="text-xl font-semibold">Status Ketersediaan Pejabat</CardTitle>
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+              <Input
+                type="text"
+                placeholder="Cari Nama Pejabat..."
+                className="pl-9"
+                value={pejabatSearchTerm}
+                onChange={(e) => setPejabatSearchTerm(e.target.value)}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {pejabatStatus.map((pejabat) => (
-                <div key={pejabat.id_pejabat} className="p-4 border border-slate-200 rounded-lg">
-                  <h4 className="font-semibold text-slate-900 mb-1">{pejabat.nama}</h4>
-                  <p className="text-sm text-slate-500 mb-2">{pejabat.jabatan?.nama_jabatan || '-'}</p>
-                  {getStatusBadge(pejabat.status)}
+              {filteredPejabatStatus.length > 0 ? (
+                filteredPejabatStatus.map((pejabat) => (
+                  <div key={pejabat.id_pejabat} className="p-4 border border-slate-200 rounded-lg">
+                    <h4 className="font-semibold text-slate-900 mb-1">{pejabat.nama}</h4>
+                    <p className="text-sm text-slate-500 mb-2">{pejabat.jabatan?.nama_jabatan || '-'}</p>
+                    {getStatusBadge(pejabat.status)}
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-8 text-slate-500">
+                  Tidak ada data pejabat yang cocok.
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
