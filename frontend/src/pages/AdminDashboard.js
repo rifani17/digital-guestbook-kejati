@@ -56,6 +56,8 @@ export const AdminDashboard = () => {
   const [stats, setStats] = useState({ today: 0, thisMonth: 0, presentOfficials: 0 })
   const [pejabatStatus, setPejabatStatus] = useState([])
   const [pejabatSearchTerm, setPejabatSearchTerm] = useState('')
+  const [pejabatDialogOpen, setPejabatDialogOpen] = useState(false)
+  const [selectedPejabat, setSelectedPejabat] = useState(null)
   const [chartData, setChartData] = useState([])
   const [chartFilter, setChartFilter] = useState('today')
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -404,6 +406,26 @@ Mohon arahan.`
     }
   }
 
+  const handleUpdatePejabatStatus = async (newStatus) => {
+    if (!selectedPejabat) return
+
+    try {
+      const { error } = await supabase
+        .from('pejabat')
+        .update({ status: newStatus })
+        .eq('id_pejabat', selectedPejabat.id_pejabat)
+
+      if (error) throw error
+
+      toast.success('Status pejabat berhasil diupdate')
+      setSelectedPejabat({ ...selectedPejabat, status: newStatus })
+      fetchPejabatStatus()
+      fetchStats()
+    } catch (error) {
+      console.error('Error updating pejabat status:', error)
+      toast.error('Gagal mengupdate status pejabat')
+    }
+  }
 
   const filteredPejabatStatus = pejabatStatus.filter((pejabat) =>
     pejabat.nama.toLowerCase().includes(pejabatSearchTerm.toLowerCase())
@@ -609,7 +631,14 @@ Mohon arahan.`
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredPejabatStatus.length > 0 ? (
                 filteredPejabatStatus.map((pejabat) => (
-                  <div key={pejabat.id_pejabat} className="p-4 border border-slate-200 rounded-lg">
+                  <div 
+                    key={pejabat.id_pejabat} 
+                    className="p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors"
+                    onClick={() => {
+                      setSelectedPejabat(pejabat)
+                      setPejabatDialogOpen(true)
+                    }}
+                  >
                     <h4 className="font-semibold text-slate-900 mb-1">{pejabat.nama}</h4>
                     <p className="text-sm text-slate-500 mb-2">{pejabat.jabatan?.nama_jabatan || '-'}</p>
                     {getStatusBadge(pejabat.status)}
@@ -913,6 +942,59 @@ Mohon arahan.`
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Data
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Pejabat Status Dialog */}
+        <Dialog open={pejabatDialogOpen} onOpenChange={setPejabatDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Detail Pejabat</DialogTitle>
+              <DialogDescription>
+                Informasi dan update status ketersediaan pejabat
+              </DialogDescription>
+            </DialogHeader>
+            {selectedPejabat && (
+              <div className="space-y-4 py-4">
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Nama Pejabat</Label>
+                  <p className="text-base font-semibold text-slate-900">{selectedPejabat.nama}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Jabatan</Label>
+                  <p className="text-base text-slate-900">{selectedPejabat.jabatan?.nama_jabatan || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Nomor HP</Label>
+                  <p className="text-base text-slate-900">{selectedPejabat.no_hp || '-'}</p>
+                </div>
+                
+                <div className="space-y-2 pt-4 border-t border-slate-100">
+                  <Label className="text-sm font-medium text-slate-900">Ubah Status</Label>
+                  <Select
+                    value={selectedPejabat.status}
+                    onValueChange={(value) => handleUpdatePejabatStatus(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="di_tempat">Di Tempat</SelectItem>
+                      <SelectItem value="rapat">Rapat</SelectItem>
+                      <SelectItem value="dinas_luar">Dinas Luar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setPejabatDialogOpen(false)}
+              >
+                Tutup
               </Button>
             </DialogFooter>
           </DialogContent>
