@@ -53,6 +53,7 @@ const formatLocalTime = (dateString, formatType = 'short') => {
 
 export const AdminDashboard = () => {
   const [visitors, setVisitors] = useState([])
+  const [visitorSearchTerm, setVisitorSearchTerm] = useState('')
   const [stats, setStats] = useState({ today: 0, thisMonth: 0, presentOfficials: 0 })
   const [pejabatStatus, setPejabatStatus] = useState([])
   const [pejabatSearchTerm, setPejabatSearchTerm] = useState('')
@@ -431,6 +432,10 @@ Mohon arahan.`
     pejabat.nama.toLowerCase().includes(pejabatSearchTerm.toLowerCase())
   )
 
+  const filteredVisitors = visitors.filter((visitor) =>
+    visitor.nama.toLowerCase().includes(visitorSearchTerm.toLowerCase())
+  )
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="bg-gradient-to-r from-emerald-700 to-emerald-800 border-b border-emerald-900 shadow-lg">
@@ -513,150 +518,176 @@ Mohon arahan.`
       </div>
 
       <div className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="shadow-sm border-slate-200">
-            <CardHeader className="pb-3">
-              <CardDescription className="text-sm uppercase tracking-wider text-slate-500">Pengunjung Hari Ini</CardDescription>
-              <CardTitle className="text-4xl font-bold text-slate-900">{stats.today}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Users className="w-8 h-8 text-emerald-600" />
-            </CardContent>
-          </Card>
+        <div className="flex flex-col xl:flex-row gap-6 mb-8">
+          {/* Kolom Kiri: 2/3 */}
+          <div className="w-full xl:w-2/3 flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="shadow-sm border-slate-200">
+                <CardHeader className="pb-3">
+                  <CardDescription className="text-sm uppercase tracking-wider text-slate-500">Pengunjung Hari Ini</CardDescription>
+                  <CardTitle className="text-4xl font-bold text-slate-900">{stats.today}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Users className="w-8 h-8 text-emerald-600" />
+                </CardContent>
+              </Card>
 
-          <Card className="shadow-sm border-slate-200">
-            <CardHeader className="pb-3">
-              <CardDescription className="text-sm uppercase tracking-wider text-slate-500">Bulan Ini</CardDescription>
-              <CardTitle className="text-4xl font-bold text-slate-900">{stats.thisMonth}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Calendar className="w-8 h-8 text-emerald-600" />
-            </CardContent>
-          </Card>
+              <Card className="shadow-sm border-slate-200">
+                <CardHeader className="pb-3">
+                  <CardDescription className="text-sm uppercase tracking-wider text-slate-500">Bulan Ini</CardDescription>
+                  <CardTitle className="text-4xl font-bold text-slate-900">{stats.thisMonth}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Calendar className="w-8 h-8 text-emerald-600" />
+                </CardContent>
+              </Card>
 
-          <Card className="shadow-sm border-slate-200">
-            <CardHeader className="pb-3">
-              <CardDescription className="text-sm uppercase tracking-wider text-slate-500">Pejabat di Tempat</CardDescription>
-              <CardTitle className="text-4xl font-bold text-slate-900">{stats.presentOfficials}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <UserCheck className="w-8 h-8 text-emerald-600" />
-            </CardContent>
-          </Card>
+              <Card className="shadow-sm border-slate-200">
+                <CardHeader className="pb-3">
+                  <CardDescription className="text-sm uppercase tracking-wider text-slate-500">Pejabat di Tempat</CardDescription>
+                  <CardTitle className="text-4xl font-bold text-slate-900">{stats.presentOfficials}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <UserCheck className="w-8 h-8 text-emerald-600" />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Visitor Chart */}
+            <Card className="shadow-sm border-slate-200 flex-1 flex flex-col">
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-emerald-600" />
+                      Statistik Kunjungan
+                    </CardTitle>
+                    <CardDescription>Grafik jumlah pengunjung</CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={chartFilter === 'today' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setChartFilter('today')}
+                      className={chartFilter === 'today' ? 'bg-emerald-700 hover:bg-emerald-800' : ''}
+                    >
+                      Hari Ini
+                    </Button>
+                    <Button
+                      variant={chartFilter === 'week' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setChartFilter('week')}
+                      className={chartFilter === 'week' ? 'bg-emerald-700 hover:bg-emerald-800' : ''}
+                    >
+                      7 Hari
+                    </Button>
+                    <Button
+                      variant={chartFilter === 'month' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setChartFilter('month')}
+                      className={chartFilter === 'month' ? 'bg-emerald-700 hover:bg-emerald-800' : ''}
+                    >
+                      Bulan Ini
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis 
+                        dataKey="label" 
+                        tick={{ fill: '#64748b', fontSize: 12 }}
+                        angle={chartFilter === 'month' ? -45 : 0}
+                        textAnchor={chartFilter === 'month' ? 'end' : 'middle'}
+                        height={chartFilter === 'month' ? 80 : 30}
+                      />
+                      <YAxis 
+                        tick={{ fill: '#64748b', fontSize: 12 }}
+                        allowDecimals={false}
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.value > 0 ? '#059669' : '#e2e8f0'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Kolom Kanan: 1/3 */}
+          <div className="w-full xl:w-1/3 flex">
+            {/* Pejabat Status */}
+            <Card className="shadow-sm border-slate-200 flex-1 flex flex-col">
+              <CardHeader className="flex flex-col gap-4">
+                <CardTitle className="text-xl font-semibold">Status Pejabat</CardTitle>
+                <div className="relative w-full">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                  <Input
+                    type="text"
+                    placeholder="Cari Pejabat..."
+                    className="pl-9"
+                    value={pejabatSearchTerm}
+                    onChange={(e) => setPejabatSearchTerm(e.target.value)}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 p-0 xl:relative">
+                <div className="h-[500px] xl:h-auto xl:absolute xl:inset-0 overflow-y-auto px-6 pb-6">
+                  <div className="grid grid-cols-1 gap-3">
+                    {filteredPejabatStatus.length > 0 ? (
+                      filteredPejabatStatus.map((pejabat) => (
+                        <div 
+                          key={pejabat.id_pejabat} 
+                          className="p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors flex flex-col gap-2"
+                          onClick={() => {
+                            setSelectedPejabat(pejabat)
+                            setPejabatDialogOpen(true)
+                          }}
+                        >
+                          <div>
+                            <h4 className="font-semibold text-slate-900 mb-1">{pejabat.nama}</h4>
+                            <p className="text-xs text-slate-500 leading-tight mb-2">{pejabat.jabatan?.nama_jabatan || '-'}</p>
+                          </div>
+                          <div className="mt-auto">
+                            {getStatusBadge(pejabat.status)}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-slate-500">
+                        Tidak ada data pejabat yang cocok.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* Visitor Chart */}
-        <Card className="shadow-sm border-slate-200 mb-8">
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-emerald-600" />
-                  Statistik Kunjungan
-                </CardTitle>
-                <CardDescription>Grafik jumlah pengunjung</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={chartFilter === 'today' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setChartFilter('today')}
-                  className={chartFilter === 'today' ? 'bg-emerald-700 hover:bg-emerald-800' : ''}
-                >
-                  Hari Ini
-                </Button>
-                <Button
-                  variant={chartFilter === 'week' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setChartFilter('week')}
-                  className={chartFilter === 'week' ? 'bg-emerald-700 hover:bg-emerald-800' : ''}
-                >
-                  7 Hari
-                </Button>
-                <Button
-                  variant={chartFilter === 'month' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setChartFilter('month')}
-                  className={chartFilter === 'month' ? 'bg-emerald-700 hover:bg-emerald-800' : ''}
-                >
-                  Bulan Ini
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis 
-                    dataKey="label" 
-                    tick={{ fill: '#64748b', fontSize: 12 }}
-                    angle={chartFilter === 'month' ? -45 : 0}
-                    textAnchor={chartFilter === 'month' ? 'end' : 'middle'}
-                    height={chartFilter === 'month' ? 80 : 30}
-                  />
-                  <YAxis 
-                    tick={{ fill: '#64748b', fontSize: 12 }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.value > 0 ? '#059669' : '#e2e8f0'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Pejabat Status */}
-        <Card className="shadow-sm border-slate-200 mb-8">
+        <Card className="shadow-sm border-slate-200">
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle className="text-xl font-semibold">Status Ketersediaan Pejabat</CardTitle>
+            <div>
+              <CardTitle className="text-xl font-semibold">Data Pengunjung</CardTitle>
+              <CardDescription>Riwayat pengunjung terbaru</CardDescription>
+            </div>
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
               <Input
                 type="text"
-                placeholder="Cari Nama Pejabat..."
+                placeholder="Cari Nama Pengunjung..."
                 className="pl-9"
-                value={pejabatSearchTerm}
-                onChange={(e) => setPejabatSearchTerm(e.target.value)}
+                value={visitorSearchTerm}
+                onChange={(e) => setVisitorSearchTerm(e.target.value)}
               />
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredPejabatStatus.length > 0 ? (
-                filteredPejabatStatus.map((pejabat) => (
-                  <div 
-                    key={pejabat.id_pejabat} 
-                    className="p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors"
-                    onClick={() => {
-                      setSelectedPejabat(pejabat)
-                      setPejabatDialogOpen(true)
-                    }}
-                  >
-                    <h4 className="font-semibold text-slate-900 mb-1">{pejabat.nama}</h4>
-                    <p className="text-sm text-slate-500 mb-2">{pejabat.jabatan?.nama_jabatan || '-'}</p>
-                    {getStatusBadge(pejabat.status)}
-                  </div>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-8 text-slate-500">
-                  Tidak ada data pejabat yang cocok.
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm border-slate-200">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Data Pengunjung</CardTitle>
-            <CardDescription>Riwayat pengunjung terbaru</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -674,7 +705,8 @@ Mohon arahan.`
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visitors.map((visitor) => (
+                  {filteredVisitors.length > 0 ? (
+                    filteredVisitors.map((visitor) => (
                     <TableRow key={visitor.id_tamu}>
                       <TableCell className="whitespace-nowrap">
                         {formatLocalTime(visitor.tanggal, 'short')}
@@ -736,7 +768,14 @@ Mohon arahan.`
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-slate-500">
+                      Tidak ada data pengunjung yang cocok.
+                    </TableCell>
+                  </TableRow>
+                )}
                 </TableBody>
               </Table>
             </div>
