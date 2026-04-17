@@ -554,10 +554,9 @@ Mohon arahan.`
       </div>
 
       <div className="container mx-auto px-6 py-8">
-        <div className="flex flex-col xl:flex-row gap-6 mb-8">
-          {/* Kolom Kiri: 2/3 */}
-          <div className="w-full xl:w-2/3 flex flex-col gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Atas: Statistik & Chart */}
+        <div className="flex flex-col gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="shadow-sm border-slate-200">
                 <CardHeader className="pb-3">
                   <CardDescription className="text-sm uppercase tracking-wider text-slate-500">Pengunjung Hari Ini</CardDescription>
@@ -655,10 +654,12 @@ Mohon arahan.`
                 </div>
               </CardContent>
             </Card>
-          </div>
+        </div>
 
-          {/* Kolom Kanan: 1/3 */}
-          <div className="w-full xl:w-1/3 flex">
+        {/* Tengah: Status Pejabat & Agenda Kegiatan (50% - 50%) */}
+        <div className="flex flex-col xl:flex-row gap-6 mb-8">
+          {/* Kolom Kiri: Status Pejabat */}
+          <div className="w-full xl:w-1/2 flex">
             {/* Pejabat Status */}
             <Card className="shadow-sm border-slate-200 flex-1 flex flex-col">
               <CardHeader className="flex flex-col gap-4">
@@ -706,8 +707,84 @@ Mohon arahan.`
               </CardContent>
             </Card>
           </div>
+
+          {/* Kolom Kanan: Agenda Kegiatan */}
+          <div className="w-full xl:w-1/2 flex">
+            <Card className="shadow-sm border-slate-200 flex-1 flex flex-col">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                    <CalendarDays className="w-5 h-5 text-emerald-600" />
+                    Agenda Kegiatan
+                  </CardTitle>
+                  <CardDescription>Daftar agenda kegiatan kantor</CardDescription>
+                </div>
+                <Link to="/admin/agenda">
+                  <Button variant="outline" size="sm" className="h-9" data-testid="kelola-agenda-link">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Kelola Agenda
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent className="flex-1 p-0 xl:relative">
+                <div className="h-[500px] xl:h-auto xl:absolute xl:inset-0 overflow-y-auto px-6 pb-6">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nama Agenda</TableHead>
+                          <TableHead>Tanggal</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {agendaList.length > 0 ? (
+                          agendaList.map((agenda) => {
+                            const status = calculateStatus(agenda.tanggal_mulai, agenda.tanggal_akhir)
+                            const statusBadgeClass =
+                              status === 'akan_datang'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : status === 'berjalan'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-slate-100 text-slate-600'
+                            const statusLabel =
+                              status === 'akan_datang'
+                                ? 'Akan Datang'
+                                : status === 'berjalan'
+                                ? 'Berjalan'
+                                : 'Selesai'
+                            return (
+                              <TableRow key={agenda.id_agenda}>
+                                <TableCell className="font-medium">{agenda.nama_agenda}</TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                  {agenda.tanggal_mulai} – {agenda.tanggal_akhir}
+                                  {agenda.waktu && <span className="ml-1 text-slate-500">({agenda.waktu})</span>}
+                                </TableCell>
+                                <TableCell>
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadgeClass}`}>
+                                    {statusLabel}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            )
+                          })
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center py-8 text-slate-500">
+                              Belum ada agenda
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
+        {/* Bawah: Data Pengunjung */}
         <Card className="shadow-sm border-slate-200">
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -868,77 +945,6 @@ Mohon arahan.`
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Agenda Kegiatan Card */}
-        <Card className="shadow-sm border-slate-200 mt-6">
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                <CalendarDays className="w-5 h-5 text-emerald-600" />
-                Agenda Kegiatan
-              </CardTitle>
-              <CardDescription>Daftar agenda kegiatan kantor</CardDescription>
-            </div>
-            <Link to="/admin/agenda">
-              <Button variant="outline" size="sm" className="h-9" data-testid="kelola-agenda-link">
-                <Calendar className="w-4 h-4 mr-2" />
-                Kelola Agenda
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nama Agenda</TableHead>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {agendaList.length > 0 ? (
-                    agendaList.map((agenda) => {
-                      const status = calculateStatus(agenda.tanggal_mulai, agenda.tanggal_akhir)
-                      const statusBadgeClass =
-                        status === 'akan_datang'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : status === 'berjalan'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-slate-100 text-slate-600'
-                      const statusLabel =
-                        status === 'akan_datang'
-                          ? 'Akan Datang'
-                          : status === 'berjalan'
-                          ? 'Berjalan'
-                          : 'Selesai'
-                      return (
-                        <TableRow key={agenda.id_agenda}>
-                          <TableCell className="font-medium">{agenda.nama_agenda}</TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {agenda.tanggal_mulai} – {agenda.tanggal_akhir}
-                            {agenda.waktu && <span className="ml-1 text-slate-500">({agenda.waktu})</span>}
-                          </TableCell>
-                          <TableCell>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadgeClass}`}>
-                              {statusLabel}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center py-8 text-slate-500">
-                        Belum ada agenda
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
           </CardContent>
         </Card>
 
