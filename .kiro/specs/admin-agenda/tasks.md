@@ -6,14 +6,14 @@ Implementasi fitur manajemen agenda kantor untuk admin Kejaksaan Tinggi Kalimant
 
 ## Tasks
 
-- [ ] 1. Buat migrasi database tabel `agenda`
+- [x] 1. Buat migrasi database tabel `agenda`
   - Buat file `database/agenda_schema.sql` berisi DDL tabel `agenda` dengan kolom `id_agenda`, `nama_agenda`, `tanggal_mulai`, `tanggal_akhir`, `waktu`, `tempat`, `created_at`
   - Tambahkan index `idx_agenda_tanggal_mulai` pada kolom `tanggal_mulai ASC`
   - Tambahkan RLS policies: SELECT publik, INSERT/UPDATE/DELETE hanya `auth.role() = 'authenticated'`
   - _Requirements: 1.1, 1.2, 7.1, 7.2_
 
 - [ ] 2. Implementasi `agendaUtils.js` — kalkulasi status
-  - [ ] 2.1 Buat `frontend/src/lib/agendaUtils.js` dengan fungsi `calculateStatus(tanggal_mulai, tanggal_akhir, today)`
+  - [x] 2.1 Buat `frontend/src/lib/agendaUtils.js` dengan fungsi `calculateStatus(tanggal_mulai, tanggal_akhir, today)`
     - Bandingkan string tanggal lokal `YYYY-MM-DD` menggunakan `today.toLocaleDateString('sv')`
     - Return `akan_datang` jika today < tanggal_mulai
     - Return `berjalan` jika tanggal_mulai <= today <= tanggal_akhir
@@ -53,7 +53,7 @@ Implementasi fitur manajemen agenda kantor untuk admin Kejaksaan Tinggi Kalimant
     - **Validates: Requirements 2.6**
 
 - [ ] 3. Implementasi `agendaService.js` — data layer
-  - [ ] 3.1 Buat `frontend/src/lib/agendaService.js` dengan empat fungsi
+  - [x] 3.1 Buat `frontend/src/lib/agendaService.js` dengan empat fungsi
     - `fetchAgenda()` — SELECT * FROM agenda ORDER BY tanggal_mulai ASC
     - `createAgenda({ nama_agenda, tanggal_mulai, tanggal_akhir, waktu, tempat })` — validasi tanggal_akhir >= tanggal_mulai sebelum insert
     - `updateAgenda(id_agenda, data)` — validasi tanggal_akhir >= tanggal_mulai sebelum update
@@ -72,11 +72,11 @@ Implementasi fitur manajemen agenda kantor untuk admin Kejaksaan Tinggi Kalimant
     - **Property 5: Validasi tanggal — tanggal_akhir sebelum tanggal_mulai selalu ditolak**
     - **Validates: Requirements 1.3, 4.5**
 
-- [ ] 4. Checkpoint — Pastikan semua tests utility dan service lulus
+- [x] 4. Checkpoint — Pastikan semua tests utility dan service lulus
   - Pastikan semua tests lulus, tanyakan ke user jika ada pertanyaan.
 
 - [ ] 5. Buat halaman `AdminAgenda.js`
-  - [ ] 5.1 Buat `frontend/src/pages/AdminAgenda.js` — struktur dasar dan state
+  - [x] 5.1 Buat `frontend/src/pages/AdminAgenda.js` — struktur dasar dan state
     - Ikuti pola `AdminJabatan.js`: named export, Shadcn UI, Sonner toast, Tailwind only
     - State: `agendaList`, `isDialogOpen`, `editingId`, `formData`, `isDeleteDialogOpen`, `deletingId`
     - `initialFormData`: `{ nama_agenda: '', tanggal_mulai: '', tanggal_akhir: '', waktu: '', tempat: '' }`
@@ -84,14 +84,14 @@ Implementasi fitur manajemen agenda kantor untuk admin Kejaksaan Tinggi Kalimant
     - `useEffect` → `fetchAgenda()` saat mount
     - _Requirements: 3.1, 4.1, 5.1_
 
-  - [ ] 5.2 Implementasi tabel daftar agenda dengan badge status
+  - [x] 5.2 Implementasi tabel daftar agenda dengan badge status
     - Render tabel dengan kolom: nama agenda, tanggal mulai, tanggal akhir, waktu, tempat, status, aksi
     - Gunakan `calculateStatus` dari `agendaUtils.js` untuk setiap baris
     - Badge status: kuning (`bg-yellow-100 text-yellow-800`) untuk `akan_datang`, hijau (`bg-green-100 text-green-800`) untuk `berjalan`, abu-abu (`bg-slate-100 text-slate-600`) untuk `selesai`
     - Tampilkan pesan "Belum ada agenda" saat list kosong
     - _Requirements: 6.1, 6.2, 6.3, 6.5_
 
-  - [ ] 5.3 Implementasi `AgendaFormDialog` — tambah dan edit
+  - [x] 5.3 Implementasi `AgendaFormDialog` — tambah dan edit
     - Dialog Shadcn dengan form field: nama agenda (required), tanggal mulai (required), tanggal akhir (required), waktu (optional), tempat (optional)
     - Validasi inline: tampilkan pesan error jika tanggal_akhir < tanggal_mulai, disable tombol submit
     - Disable tombol submit jika `nama_agenda` kosong
@@ -100,7 +100,7 @@ Implementasi fitur manajemen agenda kantor untuk admin Kejaksaan Tinggi Kalimant
     - Dialog tidak ditutup saat operasi gagal
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4, 4.5_
 
-  - [ ] 5.4 Implementasi `DeleteConfirmDialog` — konfirmasi hapus
+  - [x] 5.4 Implementasi `DeleteConfirmDialog` — konfirmasi hapus
     - Gunakan `AlertDialog` dari Shadcn UI
     - Tampilkan dialog konfirmasi saat tombol hapus diklik
     - `handleDeleteExecute` memanggil `deleteAgenda` dari agendaService
@@ -132,18 +132,18 @@ Implementasi fitur manajemen agenda kantor untuk admin Kejaksaan Tinggi Kalimant
     - **Property 9: Badge status sesuai nilai status**
     - **Validates: Requirements 6.2**
 
-- [ ] 6. Tambahkan route `/admin/agenda` di `App.js`
+- [x] 6. Tambahkan route `/admin/agenda` di `App.js`
   - Import `AdminAgenda` dari `./pages/AdminAgenda`
   - Tambahkan `<Route path="/admin/agenda">` di dalam `ProtectedRoute`, mengikuti pola route `/admin/jabatan`
   - _Requirements: 7.3_
 
 - [ ] 7. Tambahkan widget agenda di `AdminDashboard.js`
-  - [ ] 7.1 Tambahkan `fetchAgenda` ke dalam `fetchData()` yang sudah ada (paralel dengan fetch lainnya)
+  - [x] 7.1 Tambahkan `fetchAgenda` ke dalam `fetchData()` yang sudah ada (paralel dengan fetch lainnya)
     - Import `fetchAgenda` dari `agendaService`
     - Tambahkan state `agendaList` di `AdminDashboard`
     - _Requirements: 6.4_
 
-  - [ ] 7.2 Render section widget agenda di `AdminDashboard`
+  - [x] 7.2 Render section widget agenda di `AdminDashboard`
     - Tambahkan Card baru setelah section statistik yang sudah ada
     - Tampilkan tabel ringkas: nama agenda, tanggal mulai–akhir, status badge
     - Gunakan `calculateStatus` dari `agendaUtils.js`
@@ -153,7 +153,7 @@ Implementasi fitur manajemen agenda kantor untuk admin Kejaksaan Tinggi Kalimant
     - Tambahkan link "Kelola Agenda" di navigasi header desktop dan mobile dropdown (mengikuti pola link "Kelola Jabatan")
     - _Requirements: 6.1, 6.2, 6.3, 6.5, 6.6_
 
-- [ ] 8. Final checkpoint — Pastikan semua tests lulus dan integrasi berjalan
+- [x] 8. Final checkpoint — Pastikan semua tests lulus dan integrasi berjalan
   - Pastikan semua tests lulus, tanyakan ke user jika ada pertanyaan.
 
 ## Notes

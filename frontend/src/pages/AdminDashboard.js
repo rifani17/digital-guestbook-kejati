@@ -11,11 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu'
-import { Users, Calendar, LogOut, UserCog, Briefcase, UserPlus, Menu, UserCheck, TrendingUp, Edit, Trash2, Eye, Search } from 'lucide-react'
+import { Users, Calendar, CalendarDays, LogOut, UserCog, Briefcase, UserPlus, Menu, UserCheck, TrendingUp, Edit, Trash2, Eye, Search } from 'lucide-react'
 import { format, subDays, startOfDay, startOfMonth } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { toast } from 'sonner'
+import { fetchAgenda } from '../lib/agendaService'
+import { calculateStatus } from '../lib/agendaUtils'
 
 // Helper function to format date in local timezone
 const formatLocalTime = (dateString, formatType = 'short') => {
@@ -65,6 +67,7 @@ export const AdminDashboard = () => {
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false)
   const [previewingVisitor, setPreviewingVisitor] = useState(null)
   const [editingVisitor, setEditingVisitor] = useState(null)
+  const [agendaList, setAgendaList] = useState([])
   const [editFormData, setEditFormData] = useState({
     nama: '',
     asal: '',
@@ -93,7 +96,18 @@ export const AdminDashboard = () => {
   }, [chartFilter])
 
   const fetchData = async () => {
-    await Promise.all([fetchVisitors(), fetchStats(), fetchPejabatStatus()])
+    const [, , , agendaResult] = await Promise.all([
+      fetchVisitors(),
+      fetchStats(),
+      fetchPejabatStatus(),
+      fetchAgenda()
+    ])
+    if (agendaResult.error) {
+      console.error('Error fetching agenda:', agendaResult.error)
+      toast.error('Gagal memuat data agenda')
+    } else {
+      setAgendaList(agendaResult.data || [])
+    }
   }
 
   const fetchVisitors = async () => {
@@ -473,6 +487,12 @@ Mohon arahan.`
                   Kelola Jabatan
                 </Button>
               </Link>
+              <Link to="/admin/agenda">
+                <Button variant="outline" className="h-10 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white" data-testid="agenda-link">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Kelola Agenda
+                </Button>
+              </Link>
               <Button onClick={handleLogout} variant="outline" className="h-10 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white" data-testid="logout-button">
                 <LogOut className="w-4 h-4 mr-2" />
                 Keluar
@@ -504,6 +524,12 @@ Mohon arahan.`
                     <Link to="/admin/jabatan" className="flex items-center cursor-pointer">
                       <Briefcase className="w-4 h-4 mr-2" />
                       Kelola Jabatan
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/agenda" className="flex items-center cursor-pointer">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Kelola Agenda
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600">
@@ -776,6 +802,77 @@ Mohon arahan.`
                     </TableCell>
                   </TableRow>
                 )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Agenda Kegiatan Card */}
+        <Card className="shadow-sm border-slate-200 mt-6">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-emerald-600" />
+                Agenda Kegiatan
+              </CardTitle>
+              <CardDescription>Daftar agenda kegiatan kantor</CardDescription>
+            </div>
+            <Link to="/admin/agenda">
+              <Button variant="outline" size="sm" className="h-9" data-testid="kelola-agenda-link">
+                <Calendar className="w-4 h-4 mr-2" />
+                Kelola Agenda
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nama Agenda</TableHead>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {agendaList.length > 0 ? (
+                    agendaList.map((agenda) => {
+                      const status = calculateStatus(agenda.tanggal_mulai, agenda.tanggal_akhir)
+                      const statusBadgeClass =
+                        status === 'akan_datang'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : status === 'berjalan'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-slate-100 text-slate-600'
+                      const statusLabel =
+                        status === 'akan_datang'
+                          ? 'Akan Datang'
+                          : status === 'berjalan'
+                          ? 'Berjalan'
+                          : 'Selesai'
+                      return (
+                        <TableRow key={agenda.id_agenda}>
+                          <TableCell className="font-medium">{agenda.nama_agenda}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {agenda.tanggal_mulai} – {agenda.tanggal_akhir}
+                            {agenda.waktu && <span className="ml-1 text-slate-500">({agenda.waktu})</span>}
+                          </TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadgeClass}`}>
+                              {statusLabel}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-8 text-slate-500">
+                        Belum ada agenda
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
