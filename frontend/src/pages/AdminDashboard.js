@@ -56,6 +56,8 @@ const formatLocalTime = (dateString, formatType = 'short') => {
 export const AdminDashboard = () => {
   const [visitors, setVisitors] = useState([])
   const [visitorSearchTerm, setVisitorSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
   const [stats, setStats] = useState({ today: 0, thisMonth: 0, presentOfficials: 0 })
   const [pejabatStatus, setPejabatStatus] = useState([])
   const [pejabatSearchTerm, setPejabatSearchTerm] = useState('')
@@ -95,6 +97,10 @@ export const AdminDashboard = () => {
     fetchChartData()
   }, [chartFilter])
 
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [visitorSearchTerm])
+
   const fetchData = async () => {
     const [, , , agendaResult] = await Promise.all([
       fetchVisitors(),
@@ -121,7 +127,6 @@ export const AdminDashboard = () => {
         )
       `)
       .order('tanggal', { ascending: false })
-      .limit(50)
 
     if (error) {
       console.error('Error fetching visitors:', error)
@@ -450,6 +455,11 @@ Mohon arahan.`
     visitor.nama.toLowerCase().includes(visitorSearchTerm.toLowerCase())
   )
 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredVisitors.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredVisitors.length / itemsPerPage);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="bg-gradient-to-r from-emerald-700 to-emerald-800 border-b border-emerald-900 shadow-lg">
@@ -731,8 +741,8 @@ Mohon arahan.`
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredVisitors.length > 0 ? (
-                    filteredVisitors.map((visitor) => (
+                  {currentItems.length > 0 ? (
+                    currentItems.map((visitor) => (
                     <TableRow key={visitor.id_tamu}>
                       <TableCell className="whitespace-nowrap">
                         {formatLocalTime(visitor.tanggal, 'short')}
@@ -805,6 +815,59 @@ Mohon arahan.`
                 </TableBody>
               </Table>
             </div>
+
+            {/* Pagination Controls */}
+            {filteredVisitors.length > 0 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-slate-500">
+                  Menampilkan {indexOfFirstItem + 1} sampai {Math.min(indexOfLastItem, filteredVisitors.length)} dari {filteredVisitors.length} pengunjung
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Sebelumnya
+                  </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                    // Show first, last, and pages around current page
+                    if (
+                      page === 1 || 
+                      page === totalPages || 
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className={currentPage === page ? "bg-emerald-700 hover:bg-emerald-800" : ""}
+                        >
+                          {page}
+                        </Button>
+                      )
+                    } else if (
+                      page === currentPage - 2 || 
+                      page === currentPage + 2
+                    ) {
+                      return <span key={page} className="px-2 text-slate-400">...</span>
+                    }
+                    return null;
+                  })}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                  >
+                    Selanjutnya
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
