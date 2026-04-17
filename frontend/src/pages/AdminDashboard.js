@@ -554,9 +554,10 @@ Mohon arahan.`
       </div>
 
       <div className="container mx-auto px-6 py-8">
-        {/* Atas: Statistik & Chart */}
-        <div className="flex flex-col gap-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="flex flex-col xl:flex-row gap-6 mb-8">
+          {/* Kolom Kiri: Statistik & Chart (60%) */}
+          <div className="w-full xl:w-3/5 flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="shadow-sm border-slate-200">
                 <CardHeader className="pb-3">
                   <CardDescription className="text-sm uppercase tracking-wider text-slate-500">Pengunjung Hari Ini</CardDescription>
@@ -654,12 +655,12 @@ Mohon arahan.`
                 </div>
               </CardContent>
             </Card>
-        </div>
+          </div>
 
-        {/* Tengah: Status Pejabat & Agenda Kegiatan (50% - 50%) */}
-        <div className="flex flex-col xl:flex-row gap-6 mb-8">
-          {/* Kolom Kiri: Status Pejabat */}
-          <div className="w-full xl:w-1/2 flex">
+          {/* Kolom Kanan: Status Pejabat & Agenda Kegiatan (40%) */}
+          <div className="w-full xl:w-2/5 flex flex-col xl:flex-row gap-6">
+            {/* Status Pejabat */}
+            <div className="w-full xl:w-1/2 flex">
             {/* Pejabat Status */}
             <Card className="shadow-sm border-slate-200 flex-1 flex flex-col">
               <CardHeader className="flex flex-col gap-4">
@@ -708,7 +709,7 @@ Mohon arahan.`
             </Card>
           </div>
 
-          {/* Kolom Kanan: Agenda Kegiatan */}
+          {/* Agenda Kegiatan */}
           <div className="w-full xl:w-1/2 flex">
             <Card className="shadow-sm border-slate-200 flex-1 flex flex-col">
               <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -782,6 +783,7 @@ Mohon arahan.`
               </CardContent>
             </Card>
           </div>
+        </div>
         </div>
 
         {/* Bawah: Data Pengunjung */}
