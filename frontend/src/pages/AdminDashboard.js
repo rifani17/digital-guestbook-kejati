@@ -11,12 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu'
-import { Users, Calendar, CalendarDays, LogOut, UserCog, Briefcase, UserPlus, Menu, UserCheck, TrendingUp, Edit, Trash2, Eye, Search } from 'lucide-react'
+import { Users, Calendar, CalendarDays, LogOut, UserCog, Briefcase, UserPlus, Menu, UserCheck, TrendingUp, Edit, Trash2, Eye, Search, MapPin, Plus } from 'lucide-react'
 import { format, subDays, startOfDay, startOfMonth } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { toast } from 'sonner'
-import { fetchAgenda } from '../lib/agendaService'
+import { fetchAgenda, createAgenda, updateAgenda, deleteAgenda } from '../lib/agendaService'
 import { calculateStatus } from '../lib/agendaUtils'
 
 // Helper function to format date in local timezone
@@ -70,6 +70,20 @@ export const AdminDashboard = () => {
   const [previewingVisitor, setPreviewingVisitor] = useState(null)
   const [editingVisitor, setEditingVisitor] = useState(null)
   const [agendaList, setAgendaList] = useState([])
+  // Agenda states
+  const [addAgendaDialogOpen, setAddAgendaDialogOpen] = useState(false)
+  const [previewAgendaDialogOpen, setPreviewAgendaDialogOpen] = useState(false)
+  const [editAgendaDialogOpen, setEditAgendaDialogOpen] = useState(false)
+  const [previewingAgenda, setPreviewingAgenda] = useState(null)
+  const [editingAgenda, setEditingAgenda] = useState(null)
+  const [agendaFormData, setAgendaFormData] = useState({
+    nama_agenda: '',
+    tanggal_mulai: '',
+    tanggal_akhir: '',
+    waktu: '',
+    tempat: ''
+  })
+
   const [editFormData, setEditFormData] = useState({
     nama: '',
     asal: '',
@@ -447,6 +461,65 @@ Mohon arahan.`
     }
   }
 
+  const handleAddAgenda = async () => {
+    try {
+      const { error } = await createAgenda(agendaFormData)
+      if (error) throw error
+      toast.success('Agenda berhasil ditambahkan')
+      setAddAgendaDialogOpen(false)
+      setAgendaFormData({ nama_agenda: '', tanggal_mulai: '', tanggal_akhir: '', waktu: '', tempat: '' })
+      fetchData()
+    } catch (error) {
+      console.error('Error adding agenda:', error)
+      toast.error(error.message || 'Gagal menambahkan agenda')
+    }
+  }
+
+  const handleUpdateAgenda = async () => {
+    try {
+      const { error } = await updateAgenda(editingAgenda.id_agenda, agendaFormData)
+      if (error) throw error
+      toast.success('Agenda berhasil diupdate')
+      setEditAgendaDialogOpen(false)
+      fetchData()
+    } catch (error) {
+      console.error('Error updating agenda:', error)
+      toast.error(error.message || 'Gagal mengupdate agenda')
+    }
+  }
+
+  const handleDeleteAgenda = async (id_agenda) => {
+    if (!window.confirm('Yakin ingin menghapus agenda ini?')) return
+    try {
+      const { error } = await deleteAgenda(id_agenda)
+      if (error) throw error
+      toast.success('Agenda berhasil dihapus')
+      setPreviewAgendaDialogOpen(false)
+      fetchData()
+    } catch (error) {
+      console.error('Error deleting agenda:', error)
+      toast.error('Gagal menghapus agenda')
+    }
+  }
+
+  const handlePreviewAgenda = (agenda) => {
+    setPreviewingAgenda(agenda)
+    setPreviewAgendaDialogOpen(true)
+  }
+
+  const openEditAgendaDialog = (agenda) => {
+    setEditingAgenda(agenda)
+    setAgendaFormData({
+      nama_agenda: agenda.nama_agenda,
+      tanggal_mulai: agenda.tanggal_mulai,
+      tanggal_akhir: agenda.tanggal_akhir,
+      waktu: agenda.waktu || '',
+      tempat: agenda.tempat || ''
+    })
+    setPreviewAgendaDialogOpen(false)
+    setEditAgendaDialogOpen(true)
+  }
+
   const filteredPejabatStatus = pejabatStatus.filter((pejabat) =>
     pejabat.nama.toLowerCase().includes(pejabatSearchTerm.toLowerCase())
   )
@@ -555,36 +628,36 @@ Mohon arahan.`
 
       <div className="container mx-auto px-6 py-8">
         <div className="flex flex-col xl:flex-row gap-6 mb-8">
-          {/* Kolom Kiri: Statistik & Chart (60%) */}
-          <div className="w-full xl:w-3/5 flex flex-col gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Kolom Kiri: Statistik & Chart (40%) */}
+          <div className="w-full xl:w-2/5 flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 xl:gap-3">
               <Card className="shadow-sm border-slate-200">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-sm uppercase tracking-wider text-slate-500">Pengunjung Hari Ini</CardDescription>
-                  <CardTitle className="text-4xl font-bold text-slate-900">{stats.today}</CardTitle>
+                <CardHeader className="pb-2 px-3 xl:px-4 pt-4">
+                  <CardDescription className="text-[10px] xl:text-xs uppercase tracking-tight text-slate-500 line-clamp-1">Hari Ini</CardDescription>
+                  <CardTitle className="text-2xl xl:text-3xl font-bold text-slate-900">{stats.today}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Users className="w-8 h-8 text-emerald-600" />
+                <CardContent className="px-3 xl:px-4 pb-4 pt-0">
+                  <Users className="w-5 h-5 xl:w-6 xl:h-6 text-emerald-600" />
                 </CardContent>
               </Card>
 
               <Card className="shadow-sm border-slate-200">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-sm uppercase tracking-wider text-slate-500">Bulan Ini</CardDescription>
-                  <CardTitle className="text-4xl font-bold text-slate-900">{stats.thisMonth}</CardTitle>
+                <CardHeader className="pb-2 px-3 xl:px-4 pt-4">
+                  <CardDescription className="text-[10px] xl:text-xs uppercase tracking-tight text-slate-500 line-clamp-1">Bulan Ini</CardDescription>
+                  <CardTitle className="text-2xl xl:text-3xl font-bold text-slate-900">{stats.thisMonth}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Calendar className="w-8 h-8 text-emerald-600" />
+                <CardContent className="px-3 xl:px-4 pb-4 pt-0">
+                  <Calendar className="w-5 h-5 xl:w-6 xl:h-6 text-emerald-600" />
                 </CardContent>
               </Card>
 
               <Card className="shadow-sm border-slate-200">
-                <CardHeader className="pb-3">
-                  <CardDescription className="text-sm uppercase tracking-wider text-slate-500">Pejabat di Tempat</CardDescription>
-                  <CardTitle className="text-4xl font-bold text-slate-900">{stats.presentOfficials}</CardTitle>
+                <CardHeader className="pb-2 px-3 xl:px-4 pt-4">
+                  <CardDescription className="text-[10px] xl:text-xs uppercase tracking-tight text-slate-500 line-clamp-1">Di Tempat</CardDescription>
+                  <CardTitle className="text-2xl xl:text-3xl font-bold text-slate-900">{stats.presentOfficials}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <UserCheck className="w-8 h-8 text-emerald-600" />
+                <CardContent className="px-3 xl:px-4 pb-4 pt-0">
+                  <UserCheck className="w-5 h-5 xl:w-6 xl:h-6 text-emerald-600" />
                 </CardContent>
               </Card>
             </div>
@@ -657,8 +730,8 @@ Mohon arahan.`
             </Card>
           </div>
 
-          {/* Kolom Kanan: Status Pejabat & Agenda Kegiatan (40%) */}
-          <div className="w-full xl:w-2/5 flex flex-col xl:flex-row gap-6">
+          {/* Kolom Kanan: Status Pejabat & Agenda Kegiatan (60%) */}
+          <div className="w-full xl:w-3/5 flex flex-col xl:flex-row gap-6">
             {/* Status Pejabat */}
             <div className="w-full xl:w-1/2 flex">
             {/* Pejabat Status */}
@@ -720,64 +793,68 @@ Mohon arahan.`
                   </CardTitle>
                   <CardDescription>Daftar agenda kegiatan kantor</CardDescription>
                 </div>
-                <Link to="/admin/agenda">
-                  <Button variant="outline" size="sm" className="h-9" data-testid="kelola-agenda-link">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Kelola Agenda
-                  </Button>
-                </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-9" 
+                  data-testid="tambah-agenda-btn"
+                  onClick={() => {
+                    setAgendaFormData({ nama_agenda: '', tanggal_mulai: '', tanggal_akhir: '', waktu: '', tempat: '' })
+                    setAddAgendaDialogOpen(true)
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Tambah Agenda
+                </Button>
               </CardHeader>
               <CardContent className="flex-1 p-0 xl:relative">
                 <div className="h-[500px] xl:h-auto xl:absolute xl:inset-0 overflow-y-auto px-6 pb-6">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nama Agenda</TableHead>
-                          <TableHead>Tanggal</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {agendaList.length > 0 ? (
-                          agendaList.map((agenda) => {
-                            const status = calculateStatus(agenda.tanggal_mulai, agenda.tanggal_akhir)
-                            const statusBadgeClass =
-                              status === 'akan_datang'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : status === 'berjalan'
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-slate-100 text-slate-600'
-                            const statusLabel =
-                              status === 'akan_datang'
-                                ? 'Akan Datang'
-                                : status === 'berjalan'
-                                ? 'Berjalan'
-                                : 'Selesai'
-                            return (
-                              <TableRow key={agenda.id_agenda}>
-                                <TableCell className="font-medium">{agenda.nama_agenda}</TableCell>
-                                <TableCell className="whitespace-nowrap">
-                                  {agenda.tanggal_mulai} – {agenda.tanggal_akhir}
-                                  {agenda.waktu && <span className="ml-1 text-slate-500">({agenda.waktu})</span>}
-                                </TableCell>
-                                <TableCell>
-                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadgeClass}`}>
-                                    {statusLabel}
-                                  </span>
-                                </TableCell>
-                              </TableRow>
-                            )
-                          })
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={3} className="text-center py-8 text-slate-500">
-                              Belum ada agenda
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                  <div className="grid grid-cols-1 gap-3">
+                    {agendaList.length > 0 ? (
+                      agendaList.map((agenda) => {
+                        const status = calculateStatus(agenda.tanggal_mulai, agenda.tanggal_akhir)
+                        const statusBadgeClass =
+                          status === 'akan_datang'
+                            ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                            : status === 'berjalan'
+                            ? 'bg-green-100 text-green-800 border-green-200'
+                            : 'bg-slate-100 text-slate-600 border-slate-200'
+                        const statusLabel =
+                          status === 'akan_datang'
+                            ? 'Akan Datang'
+                            : status === 'berjalan'
+                            ? 'Berjalan'
+                            : 'Selesai'
+                        return (
+                          <div key={agenda.id_agenda} onClick={() => handlePreviewAgenda(agenda)} className="p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors flex flex-col gap-2 relative">
+                            <div className="flex justify-between items-start gap-2 pr-16">
+                              <h4 className="font-semibold text-slate-900 mb-1 leading-tight">{agenda.nama_agenda}</h4>
+                            </div>
+                            <div className="absolute top-4 right-4">
+                              <span className={`px-2 py-1 border rounded-full text-[10px] font-medium ${statusBadgeClass}`}>
+                                {statusLabel}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="text-xs text-slate-500 flex items-center gap-1">
+                                <Calendar className="w-3 h-3 flex-shrink-0" />
+                                <span className="truncate">{agenda.tanggal_mulai} – {agenda.tanggal_akhir} {agenda.waktu && `(${agenda.waktu})`}</span>
+                              </p>
+                              {agenda.tempat && (
+                                <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                                  <MapPin className="w-3 h-3 flex-shrink-0" />
+                                  <span className="line-clamp-2">{agenda.tempat}</span>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <div className="text-center py-8 text-slate-500">
+                        Belum ada agenda
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -1203,6 +1280,192 @@ Mohon arahan.`
               >
                 Tutup
               </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Agenda Dialog */}
+        <Dialog open={addAgendaDialogOpen} onOpenChange={setAddAgendaDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Tambah Agenda</DialogTitle>
+              <DialogDescription>Masukkan detail agenda baru</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="add-nama-agenda">Nama Agenda</Label>
+                <Input
+                  id="add-nama-agenda"
+                  value={agendaFormData.nama_agenda}
+                  onChange={(e) => setAgendaFormData({ ...agendaFormData, nama_agenda: e.target.value })}
+                  placeholder="Nama agenda"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="add-tanggal-mulai">Tanggal Mulai</Label>
+                  <Input
+                    id="add-tanggal-mulai"
+                    type="date"
+                    value={agendaFormData.tanggal_mulai}
+                    onChange={(e) => setAgendaFormData({ ...agendaFormData, tanggal_mulai: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="add-tanggal-akhir">Tanggal Akhir</Label>
+                  <Input
+                    id="add-tanggal-akhir"
+                    type="date"
+                    value={agendaFormData.tanggal_akhir}
+                    onChange={(e) => setAgendaFormData({ ...agendaFormData, tanggal_akhir: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-waktu">Waktu <span className="text-slate-400 font-normal">(Opsional)</span></Label>
+                <Input
+                  id="add-waktu"
+                  value={agendaFormData.waktu}
+                  onChange={(e) => setAgendaFormData({ ...agendaFormData, waktu: e.target.value })}
+                  placeholder="Misal: 09:00 - Selesai"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-tempat">Tempat <span className="text-slate-400 font-normal">(Opsional)</span></Label>
+                <Input
+                  id="add-tempat"
+                  value={agendaFormData.tempat}
+                  onChange={(e) => setAgendaFormData({ ...agendaFormData, tempat: e.target.value })}
+                  placeholder="Lokasi agenda"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddAgendaDialogOpen(false)}>Batal</Button>
+              <Button onClick={handleAddAgenda} className="bg-emerald-700 hover:bg-emerald-800">Simpan Agenda</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Agenda Dialog */}
+        <Dialog open={editAgendaDialogOpen} onOpenChange={setEditAgendaDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Agenda</DialogTitle>
+              <DialogDescription>Perbarui detail agenda</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-nama-agenda">Nama Agenda</Label>
+                <Input
+                  id="edit-nama-agenda"
+                  value={agendaFormData.nama_agenda}
+                  onChange={(e) => setAgendaFormData({ ...agendaFormData, nama_agenda: e.target.value })}
+                  placeholder="Nama agenda"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-tanggal-mulai">Tanggal Mulai</Label>
+                  <Input
+                    id="edit-tanggal-mulai"
+                    type="date"
+                    value={agendaFormData.tanggal_mulai}
+                    onChange={(e) => setAgendaFormData({ ...agendaFormData, tanggal_mulai: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-tanggal-akhir">Tanggal Akhir</Label>
+                  <Input
+                    id="edit-tanggal-akhir"
+                    type="date"
+                    value={agendaFormData.tanggal_akhir}
+                    onChange={(e) => setAgendaFormData({ ...agendaFormData, tanggal_akhir: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-waktu">Waktu <span className="text-slate-400 font-normal">(Opsional)</span></Label>
+                <Input
+                  id="edit-waktu"
+                  value={agendaFormData.waktu}
+                  onChange={(e) => setAgendaFormData({ ...agendaFormData, waktu: e.target.value })}
+                  placeholder="Misal: 09:00 - Selesai"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-tempat">Tempat <span className="text-slate-400 font-normal">(Opsional)</span></Label>
+                <Input
+                  id="edit-tempat"
+                  value={agendaFormData.tempat}
+                  onChange={(e) => setAgendaFormData({ ...agendaFormData, tempat: e.target.value })}
+                  placeholder="Lokasi agenda"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditAgendaDialogOpen(false)}>Batal</Button>
+              <Button onClick={handleUpdateAgenda} className="bg-emerald-700 hover:bg-emerald-800">Update Agenda</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Preview Agenda Dialog */}
+        <Dialog open={previewAgendaDialogOpen} onOpenChange={setPreviewAgendaDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Detail Agenda</DialogTitle>
+              <DialogDescription>Preview dan aksi untuk agenda ini</DialogDescription>
+            </DialogHeader>
+            {previewingAgenda && (
+              <div className="space-y-4 py-4">
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Nama Agenda</Label>
+                  <p className="text-base font-semibold text-slate-900">{previewingAgenda.nama_agenda}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Pelaksanaan</Label>
+                  <p className="text-base text-slate-900">
+                    {previewingAgenda.tanggal_mulai} s/d {previewingAgenda.tanggal_akhir}
+                  </p>
+                </div>
+                {(previewingAgenda.waktu || previewingAgenda.tempat) && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {previewingAgenda.waktu && (
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Waktu</Label>
+                        <p className="text-base text-slate-900">{previewingAgenda.waktu}</p>
+                      </div>
+                    )}
+                    {previewingAgenda.tempat && (
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Tempat</Label>
+                        <p className="text-base text-slate-900">{previewingAgenda.tempat}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+              <Button variant="outline" onClick={() => setPreviewAgendaDialogOpen(false)}>Tutup</Button>
+              <div className="flex flex-1 gap-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  className="text-red-600 hover:text-red-700 hover:border-red-300"
+                  onClick={() => handleDeleteAgenda(previewingAgenda.id_agenda)}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Hapus
+                </Button>
+                <Button 
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white"
+                  onClick={() => openEditAgendaDialog(previewingAgenda)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+              </div>
             </DialogFooter>
           </DialogContent>
         </Dialog>
